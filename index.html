@@ -3,524 +3,656 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ELKOBBA | Audio Focus System</title>
+    <title>ELKOBBA | حمزة القبة</title>
     <!-- Libraries -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;700;900&display=swap" rel="stylesheet">
     
     <style>
         :root {
             --primary: #6366f1;
             --secondary: #a855f7;
-            --bg-dark: #05070a;
+            --bg-body: #05070a;
+            --card-bg: rgba(15, 23, 42, 0.6);
+            --text-main: #f8fafc;
+            --text-dim: #94a3b8;
+            --border-color: rgba(255, 255, 255, 0.05);
+        }
+
+        .light-theme {
+            --bg-body: #f8fafc;
+            --card-bg: rgba(255, 255, 255, 0.7);
+            --text-main: #0f172a;
+            --text-dim: #64748b;
+            --border-color: rgba(0, 0, 0, 0.05);
         }
         
         body { 
             font-family: 'Tajawal', sans-serif; 
-            background-color: var(--bg-dark);
-            color: #f8fafc;
+            background-color: var(--bg-body);
+            color: var(--text-main);
             overflow: hidden;
             height: 100vh;
             margin: 0;
-            font-size: 12px;
+            font-size: 11px;
+            transition: all 0.4s ease;
         }
 
         .glass-card {
-            background: rgba(15, 23, 42, 0.7);
-            backdrop-filter: blur(25px);
-            border: 1px solid rgba(255, 255, 255, 0.05);
-            border-radius: 1.25rem;
-            transition: all 0.3s ease;
+            background: var(--card-bg);
+            backdrop-filter: blur(15px);
+            border: 1px solid var(--border-color);
+            border-radius: 1rem;
         }
 
         .btn-action {
-            background: rgba(255, 255, 255, 0.03);
-            border: 1px solid rgba(255, 255, 255, 0.05);
+            background: rgba(255, 255, 255, 0.02);
             transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
             display: flex;
             align-items: center;
             gap: 8px;
             width: 100%;
-            padding: 8px 12px;
-            border-radius: 10px;
-            font-size: 10px;
-            color: #94a3b8;
+            padding: 10px 14px;
+            border-radius: 12px;
+            font-size: 11px;
+            color: var(--text-dim);
             cursor: pointer;
+            border: 1px solid transparent;
         }
 
         .btn-action:hover {
-            background: rgba(99, 102, 241, 0.15);
-            color: #fff;
-            transform: translateX(-3px);
+            background: rgba(99, 102, 241, 0.1);
+            color: var(--primary);
+            border-color: rgba(99, 102, 241, 0.2);
         }
 
         .btn-action.active {
             background: var(--primary);
             color: white;
-            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.2);
         }
 
-        .sound-grid-item {
+        .compact-scroll::-webkit-scrollbar { width: 4px; }
+        .compact-scroll::-webkit-scrollbar-thumb { background: var(--primary); border-radius: 10px; }
+
+        .surah-card {
+            padding: 12px;
+            border-radius: 12px;
             background: rgba(255, 255, 255, 0.03);
-            border-radius: 8px;
-            padding: 8px;
-            text-align: center;
+            border: 1px solid var(--border-color);
             cursor: pointer;
-            border: 1px solid transparent;
-            transition: all 0.2s;
+            transition: 0.3s;
         }
-
-        .sound-grid-item:hover { background: rgba(255, 255, 255, 0.08); }
-        .sound-grid-item.playing {
+        .surah-card:hover {
             border-color: var(--primary);
-            background: rgba(99, 102, 241, 0.1);
-            color: var(--primary);
+            transform: translateY(-2px);
+            background: rgba(99, 102, 241, 0.08);
         }
-
-        .timer-display {
-            font-size: 3rem;
-            font-weight: 900;
-            color: white;
-            letter-spacing: -1px;
+        .surah-card.playing {
+            border-color: var(--primary);
+            background: rgba(99, 102, 241, 0.15);
+            box-shadow: 0 0 15px rgba(99, 102, 241, 0.2);
         }
 
         #canvas-bg { position: fixed; top: 0; left: 0; z-index: -1; }
-
-        .view-section { display: none; animation: fadeIn 0.3s ease-out forwards; }
+        .view-section { display: none; animation: fadeIn 0.3s ease; }
         .view-section.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
 
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(5px); }
-            to { opacity: 1; transform: translateY(0); }
+        .modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.85);
+            backdrop-filter: blur(10px);
+            z-index: 5000;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .modal.active { display: flex; }
+
+        .stat-pill {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--border-color);
+            padding: 12px;
+            border-radius: 16px;
+            text-align: center;
         }
 
-        #toast {
+        .toast {
             position: fixed;
             bottom: 20px;
             left: 50%;
             transform: translateX(-50%) translateY(100px);
-            background: var(--primary);
-            padding: 8px 20px;
-            border-radius: 50px;
-            transition: 0.3s;
-            z-index: 1000;
+            background: #6366f1;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 10px;
             font-weight: bold;
-            box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+            transition: transform 0.3s ease;
+            z-index: 9999;
         }
-        #toast.show { transform: translateX(-50%) translateY(0); }
-        
-        ::-webkit-scrollbar { width: 4px; }
-        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 10px; }
+        .toast.show { transform: translateX(-50%) translateY(0); }
+
+        .task-item {
+            transition: all 0.3s ease;
+            animation: slideIn 0.3s ease;
+        }
+        @keyframes slideIn { from { opacity: 0; transform: translateX(20px); } to { opacity: 1; transform: translateX(0); } }
     </style>
 </head>
 <body id="main-body">
 
     <canvas id="canvas-bg"></canvas>
-    <div id="toast">تم التحديث</div>
+    <div id="toast-msg" class="toast text-xs">تم الإجراء بنجاح!</div>
 
-    <div class="flex h-screen relative z-10 p-2 md:p-3 gap-3">
-        <!-- Sidebar -->
-        <aside class="w-14 md:w-52 glass-card flex flex-col p-3 items-center md:items-stretch overflow-hidden">
-            <div class="mb-6 text-center">
-                <div class="inline-block p-2 rounded-lg bg-indigo-600 mb-2">
-                    <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2z"/></svg>
+    <!-- Tracker Modal -->
+    <div id="modal-tracker" class="modal">
+        <div class="glass-card w-full max-w-lg p-6 border-indigo-500/30 shadow-2xl">
+            <div class="flex justify-between items-center mb-6">
+                <div class="flex items-center gap-3">
+                    <i data-lucide="activity" class="w-5 h-5 text-indigo-400"></i>
+                    <h3 class="font-black text-sm">تتبع الإنجازات الزمني</h3>
                 </div>
-                <h1 class="hidden md:block text-[8px] font-black tracking-widest opacity-40 uppercase">Audio-Core v4.0</h1>
+                <button onclick="closeModal('tracker')" class="p-2 hover:bg-white/5 rounded-full"><i data-lucide="x" class="w-5 h-5 text-red-400"></i></button>
             </div>
             
-            <div class="flex-1 overflow-y-auto space-y-1.5 pr-1 custom-scroll">
-                <button onclick="switchView('main')" id="nav-main" class="btn-action active">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
-                    <span class="hidden md:block">الرئيسية</span>
-                </button>
-                <button onclick="switchView('audio')" id="nav-audio" class="btn-action">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"/></svg>
-                    <span class="hidden md:block">المكتبة الصوتية</span>
-                </button>
-                <button onclick="toggleAmbient('focus')" class="btn-action">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
-                    <span class="hidden md:block">تركيز فائق</span>
-                </button>
-                <button onclick="toggleAmbient('relax')" class="btn-action">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/></svg>
-                    <span class="hidden md:block">استرخاء</span>
-                </button>
-                <button onclick="switchView('stats')" id="nav-stats" class="btn-action">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
-                    <span class="hidden md:block">التقارير</span>
-                </button>
-                <button onclick="toggleSpheres()" class="btn-action">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/><path d="M9 10a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z"/></svg>
-                    <span class="hidden md:block">تبديل الجسيمات</span>
-                </button>
-                <button onclick="startLongBreak()" class="btn-action">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                    <span class="hidden md:block">استراحة</span>
-                </button>
-                <button onclick="shareProgress()" class="btn-action">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/></svg>
-                    <span class="hidden md:block">مشاركة</span>
-                </button>
-                <button onclick="showTip()" class="btn-action">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>
-                    <span class="hidden md:block">نصيحة</span>
-                </button>
-                <button onclick="clearAllData()" class="btn-action text-red-400">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
-                    <span class="hidden md:block">إعادة ضبط</span>
-                </button>
+            <div class="grid grid-cols-2 gap-4 mb-6">
+                <div class="stat-pill">
+                    <div class="text-[9px] opacity-40 mb-1">إنجاز اليوم</div>
+                    <div id="stat-day" class="text-xl font-black text-indigo-400">0</div>
+                </div>
+                <div class="stat-pill">
+                    <div class="text-[9px] opacity-40 mb-1">هذا الأسبوع</div>
+                    <div id="stat-week" class="text-xl font-black text-purple-400">0</div>
+                </div>
+                <div class="stat-pill">
+                    <div class="text-[9px] opacity-40 mb-1">هذا الشهر</div>
+                    <div id="stat-month" class="text-xl font-black text-blue-400">0</div>
+                </div>
+                <div class="stat-pill">
+                    <div class="text-[9px] opacity-40 mb-1">إجمالي النقاط</div>
+                    <div id="stat-xp" class="text-xl font-black text-green-400">0</div>
+                </div>
             </div>
 
-            <div class="mt-4 hidden md:flex items-center gap-2 p-2 bg-white/5 rounded-lg border border-white/5">
-                <div class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
-                <marquee class="text-[8px] font-bold text-indigo-300">نظام ELKOBBA الصوتي جاهز للعمل</marquee>
+            <div class="h-48 relative mb-4">
+                <canvas id="trackerChart"></canvas>
+            </div>
+            <p class="text-[9px] text-center opacity-40">يتم تحديث المبيان تلقائياً بناءً على تاريخ مهامك المكتملة.</p>
+        </div>
+    </div>
+
+    <!-- Confirm Clear Modal -->
+    <div id="modal-clear" class="modal">
+        <div class="glass-card w-full max-w-sm p-8 text-center border-red-500/30">
+            <i data-lucide="alert-triangle" class="w-12 h-12 text-red-500 mx-auto mb-4"></i>
+            <h3 class="font-black text-sm mb-2">تأكيد مسح كافة البيانات؟</h3>
+            <p class="text-[10px] opacity-50 mb-6">سيتم حذف المهام، التاريخ، والنقاط نهائياً ولا يمكن التراجع.</p>
+            <div class="flex gap-3">
+                <button onclick="clearAllData()" class="flex-1 bg-red-600 py-3 rounded-xl font-bold">نعم، امسح الكل</button>
+                <button onclick="closeModal('clear')" class="flex-1 bg-white/5 py-3 rounded-xl font-bold">تراجع</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="flex h-screen p-4 gap-4">
+        <!-- Sidebar -->
+        <aside class="w-16 md:w-52 glass-card flex flex-col p-4 shadow-xl">
+            <div class="mb-8 text-center">
+                <div class="w-10 h-10 bg-indigo-600 rounded-xl mx-auto flex items-center justify-center mb-3 shadow-lg shadow-indigo-500/20">
+                    <i data-lucide="zap" class="w-5 h-5 text-white"></i>
+                </div>
+                <div class="hidden md:block">
+                    <div class="h-1.5 bg-white/5 rounded-full overflow-hidden mb-1">
+                        <div id="xp-fill" class="h-full bg-gradient-to-l from-indigo-500 to-purple-500 w-0 transition-all duration-700"></div>
+                    </div>
+                    <div class="flex justify-between text-[8px] font-black opacity-50">
+                        <span>Lvl <span id="level-side">1</span></span>
+                        <span>XP <span id="xp-val">0</span></span>
+                    </div>
+                </div>
+            </div>
+            
+            <nav class="flex-1 space-y-2">
+                <button onclick="switchView('main')" id="nav-main" class="btn-action active">
+                    <i data-lucide="layout-grid" class="w-4 h-4"></i>
+                    <span class="hidden md:block font-bold">الرئيسية</span>
+                </button>
+                <button onclick="switchView('audio')" id="nav-audio" class="btn-action">
+                    <i data-lucide="music-4" class="w-4 h-4"></i>
+                    <span class="hidden md:block font-bold">المصحف المرتل</span>
+                </button>
+                <button onclick="openTracker()" class="btn-action">
+                    <i data-lucide="line-chart" class="w-4 h-4"></i>
+                    <span class="hidden md:block font-bold">تتبع المهام</span>
+                </button>
+                
+                <div class="h-px bg-white/5 my-4"></div>
+
+                <button onclick="shareApp()" class="btn-action !text-indigo-400">
+                    <i data-lucide="share-2" class="w-4 h-4"></i>
+                    <span class="hidden md:block font-bold">مشاركة التطبيق</span>
+                </button>
+                <button onclick="toggleTheme()" class="btn-action">
+                    <i data-lucide="sun-moon" class="w-4 h-4"></i>
+                    <span class="hidden md:block font-bold">المظهر</span>
+                </button>
+                <button onclick="contactSupport()" class="btn-action !text-green-400">
+                    <i data-lucide="help-circle" class="w-4 h-4"></i>
+                    <span class="hidden md:block font-bold">فريق الدعم</span>
+                </button>
+                <button onclick="document.getElementById('modal-clear').classList.add('active')" class="btn-action !text-red-400">
+                    <i data-lucide="trash-2" class="w-4 h-4"></i>
+                    <span class="hidden md:block font-bold">إعادة تعيين</span>
+                </button>
+            </nav>
+
+            <div class="mt-auto pt-4 border-t border-white/5 text-center hidden md:block">
+                <p class="text-[9px] opacity-40 font-bold leading-tight">تم تطويره من قبل <span class="text-indigo-400">حمزة القبة</span></p>
             </div>
         </aside>
 
         <!-- Main Content -->
-        <main class="flex-1 flex flex-col gap-3 overflow-hidden">
+        <main class="flex-1 flex flex-col gap-4 overflow-hidden">
             <header class="flex justify-between items-center px-1">
-                <div>
-                    <h2 class="text-base font-black" id="page-title">لوحة التحكم</h2>
-                    <p class="text-[9px] text-slate-500 font-bold" id="ambient-status">الوضع الافتراضي</p>
-                </div>
-                <div class="flex items-center gap-3 glass-card px-3 py-1 text-[9px] font-bold">
-                    <span id="playing-now">صمت</span>
-                    <div id="visualizer" class="flex items-end gap-[1px] h-3">
-                        <div class="w-[2px] bg-indigo-500 h-1"></div>
-                        <div class="w-[2px] bg-indigo-500 h-2"></div>
-                        <div class="w-[2px] bg-indigo-500 h-1"></div>
+                <h2 class="text-base font-black" id="page-title">لوحة التحكم</h2>
+                <div class="flex items-center gap-2">
+                    <div id="audio-status" class="hidden flex items-center gap-3 bg-indigo-500/10 px-4 py-2 rounded-full border border-indigo-500/20">
+                        <span id="playing-title" class="text-[9px] font-bold">...</span>
+                        <button onclick="stopAudio()" class="text-red-400"><i data-lucide="square" class="w-3 h-3"></i></button>
                     </div>
+                    <button onclick="showAdvice()" class="w-10 h-10 glass-card flex items-center justify-center text-yellow-400 hover:bg-yellow-400/10 transition-colors shadow-lg">
+                        <i data-lucide="lightbulb" class="w-5 h-5"></i>
+                    </button>
                 </div>
             </header>
 
-            <div class="flex-1 overflow-y-auto pb-4 custom-scroll">
-                <!-- Section: Main -->
+            <div class="flex-1 overflow-y-auto compact-scroll pr-1">
+                <!-- Dashboard View -->
                 <div id="section-main" class="view-section active">
-                    <div class="grid grid-cols-1 lg:grid-cols-12 gap-3">
-                        <div class="lg:col-span-5 h-full">
-                            <div class="glass-card p-6 text-center flex flex-col justify-center items-center min-h-[250px] border-b-4 border-indigo-600">
-                                <div id="timer-display" class="timer-display mb-4 font-mono">25:00</div>
-                                <div class="flex gap-2">
-                                    <button onclick="toggleTimer()" id="timer-btn" class="bg-indigo-600 hover:bg-indigo-500 text-white px-6 py-2 text-[10px] font-bold rounded-lg transition-all shadow-lg shadow-indigo-600/20">ابدأ الجلسة</button>
-                                    <button onclick="resetTimer()" class="bg-white/5 hover:bg-white/10 p-2 text-slate-300 rounded-lg border border-white/5">
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                    <div id="advice-container" class="mb-4 bg-gradient-to-r from-indigo-600/20 to-purple-600/20 border border-indigo-500/30 p-4 rounded-2xl flex items-start gap-4" style="display:none;">
+                        <div class="mt-1 p-2 bg-indigo-600 rounded-lg"><i data-lucide="sparkles" class="w-4 h-4 text-white"></i></div>
+                        <div class="flex-1">
+                            <h4 class="text-[10px] font-black opacity-50 mb-1">نصيحة ذكية</h4>
+                            <p id="advice-text" class="text-xs font-bold leading-relaxed">...</p>
+                        </div>
+                        <button onclick="document.getElementById('advice-container').style.display = 'none'"><i data-lucide="x" class="w-4 h-4"></i></button>
+                    </div>
+
+                    <div class="grid grid-cols-1 lg:grid-cols-12 gap-4">
+                        <div class="lg:col-span-8">
+                            <div class="glass-card p-6 border-t-4 border-t-indigo-500">
+                                <form onsubmit="event.preventDefault(); addTask();" class="flex gap-3 mb-6">
+                                    <input type="text" id="task-input" placeholder="اكتب مهمة جديدة..." class="flex-1 bg-white/5 border border-white/10 rounded-xl px-5 py-3 text-[11px] outline-none focus:border-indigo-500 transition-all">
+                                    <button type="submit" class="bg-indigo-600 hover:bg-indigo-500 w-12 h-12 rounded-xl text-white shadow-lg flex items-center justify-center">
+                                        <i data-lucide="plus" class="w-6 h-6"></i>
                                     </button>
+                                </form>
+                                <div id="task-list" class="space-y-3"></div>
+                            </div>
+                        </div>
+                        <div class="lg:col-span-4">
+                            <div class="glass-card p-6 text-center shadow-xl">
+                                <div id="timer-display" class="text-5xl font-black mb-6 tracking-tighter text-indigo-500">25:00</div>
+                                <div class="flex gap-2">
+                                    <button onclick="toggleTimer()" id="timer-btn" class="flex-1 bg-indigo-600 py-3 rounded-xl font-bold text-[11px]">ابدأ التركيز</button>
+                                    <button onclick="resetTimer()" class="px-4 bg-white/5 rounded-xl border border-white/10"><i data-lucide="rotate-ccw" class="w-4 h-4"></i></button>
                                 </div>
                             </div>
                         </div>
-                        <div class="lg:col-span-7 h-full">
-                            <div class="glass-card p-4 flex flex-col min-h-[250px]">
-                                <h3 class="font-bold mb-3 text-[9px] uppercase tracking-widest text-slate-500">المهام السريعة</h3>
-                                <form onsubmit="event.preventDefault(); addTask();" class="flex gap-2 mb-3">
-                                    <input type="text" id="task-input" placeholder="أضف مهمة..." class="flex-1 bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 text-[10px] text-white outline-none focus:border-indigo-500/50">
-                                    <button type="submit" class="bg-indigo-600 w-8 h-8 rounded-lg font-bold">+</button>
-                                </form>
-                                <div id="task-list" class="space-y-1.5 overflow-y-auto max-h-[120px]"></div>
-                            </div>
-                        </div>
                     </div>
                 </div>
 
-                <!-- Section: Audio Library -->
+                <!-- Audio View -->
                 <div id="section-audio" class="view-section">
-                    <div class="glass-card p-4">
-                        <div class="flex justify-between items-center mb-4">
-                            <h3 class="font-bold text-[10px] uppercase">المكتبة الصوتية - 30 نبرة</h3>
-                            <button onclick="stopAllAudio()" class="text-[9px] bg-red-500/20 text-red-400 px-3 py-1 rounded-full">إيقاف الكل</button>
-                        </div>
-                        <div class="grid grid-cols-3 md:grid-cols-5 gap-2" id="audio-grid">
-                            <!-- JS will inject 30 items -->
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Section: Stats -->
-                <div id="section-stats" class="view-section">
-                    <div class="grid grid-cols-4 gap-2 mb-3">
-                        <div class="glass-card p-3 text-center">
-                            <p class="text-[7px] font-bold text-slate-500 mb-1 uppercase">الجلسات</p>
-                            <p id="total-sessions" class="text-lg font-black">0</p>
-                        </div>
-                        <div class="glass-card p-3 text-center">
-                            <p class="text-[7px] font-bold text-slate-500 mb-1 uppercase">التركيز</p>
-                            <p id="total-minutes" class="text-lg font-black text-indigo-400">0</p>
-                        </div>
-                        <div class="glass-card p-3 text-center">
-                            <p class="text-[7px] font-bold text-slate-500 mb-1 uppercase">المهام</p>
-                            <p id="total-tasks" class="text-lg font-black text-green-400">0</p>
-                        </div>
-                        <div class="glass-card p-3 text-center">
-                            <p class="text-[7px] font-bold text-slate-500 mb-1 uppercase">المستوى</p>
-                            <p id="level" class="text-lg font-black text-yellow-500">1</p>
-                        </div>
-                    </div>
-                    <div class="glass-card p-4 h-52">
-                        <canvas id="statsChart"></canvas>
+                    <div class="glass-card p-6">
+                        <input type="text" id="surah-search" oninput="filterSurahs()" placeholder="بحث في السور..." class="w-full bg-white/5 border border-white/10 px-4 py-4 rounded-2xl text-[12px] mb-6 outline-none focus:border-indigo-500">
+                        <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4" id="audio-grid"></div>
                     </div>
                 </div>
             </div>
         </main>
     </div>
 
-    <!-- Background Audio Elements Holder -->
-    <div id="audio-container" style="display:none"></div>
-
     <script>
-        const state = {
-            tasks: JSON.parse(localStorage.getItem('dc_tasks_audio')) || [],
-            sessions: parseInt(localStorage.getItem('dc_sessions_audio')) || 0,
+        const surahs = ["الفاتحة", "البقرة", "آل عمران", "النساء", "المائدة", "الأنعام", "الأعراف", "الأنفال", "التوبة", "يونس", "هود", "يوسف", "الرعد", "إبراهيم", "الحجر", "النحل", "الإسراء", "الكهف", "مريم", "طه", "الأنبياء", "الحج", "المؤمنون", "النور", "الفرقان", "الشعراء", "النمل", "القصص", "العنكبوت", "الروم", "لقمان", "السجدة", "الأحزاب", "سبأ", "فاطر", "يس", "الصافات", "ص", "الزمر", "غافر", "فصلت", "الشورى", "الزخرف", "الدخان", "الجاثية", "الأحقاف", "محمد", "الفتح", "الحجرات", "ق", "الذاريات", "الطور", "النجم", "القمر", "الرحمن", "الواقعة", "الحديد", "المجادلة", "الحشر", "الممتحنة", "الصف", "الجمعة", "المنافقون", "التغابن", "الطلاق", "التحريم", "الملك", "القلم", "الحاقة", "المعارج", "نوح", "الجن", "المزمل", "المدثر", "القيامة", "الإنسان", "المرسلات", "النبأ", "النازعات", "عبس", "التكوير", "الانفطار", "المطففين", "الانشقاق", "البروج", "الطارق", "الأعلى", "الغاشية", "الفجر", "البلد", "الشمس", "الليل", "الضحى", "الشرح", "التين", "العلق", "القدر", "البينة", "الزلزلة", "العاديات", "القارعة", "التكاثر", "العصر", "الهمزة", "الفيل", "قريش", "الماعون", "الكوثر", "الكافرون", "النصر", "المسد", "الإخلاص", "الفلق", "الناس"];
+        const advices = ["الاستمرارية سر النجاح.", "التركيز يوفر الوقت.", "ابدأ بالمهمة الأهم.", "الإنجاز يولد الثقة.", "لا تؤجل عمل اليوم للغد.", "التنظيم هو مفتاح الحرية."];
+
+        let state = {
+            tasks: JSON.parse(localStorage.getItem('elk_tasks')) || [], 
+            history: JSON.parse(localStorage.getItem('elk_history')) || [], 
+            xp: parseInt(localStorage.getItem('elk_xp')) || 0,
+            isDark: localStorage.getItem('elk_theme') !== 'light',
             timerSeconds: 25 * 60,
             timerInterval: null,
-            spheresEnabled: true,
-            currentAudio: null,
-            audioList: [
-                { id: 'lofi1', name: 'Chill Lo-fi', url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3' },
-                { id: 'lofi2', name: 'Midnight', url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3' },
-                { id: 'lofi3', name: 'Coffee Shop', url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3' },
-                { id: 'rain', name: 'مطر خفيف', url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-4.mp3' },
-                { id: 'forest', name: 'غابة هادئة', url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-5.mp3' },
-                { id: 'wave', name: 'أمواج البحر', url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-6.mp3' },
-                { id: 'wind', name: 'رياح جبلية', url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-7.mp3' },
-                { id: 'fire', name: 'نيران دافئة', url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-8.mp3' },
-                { id: 'white', name: 'ضوضاء بيضاء', url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-9.mp3' },
-                { id: 'pink', name: 'نغمة وردية', url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-10.mp3' },
-                { id: 'piano1', name: 'بيانو هادئ', url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-11.mp3' },
-                { id: 'piano2', name: 'بيانو حزين', url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-12.mp3' },
-                { id: 'deep', name: 'تركيز عميق', url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-13.mp3' },
-                { id: 'zen', name: 'تأمل زن', url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-14.mp3' },
-                { id: 'space', name: 'فضاء خارجي', url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-15.mp3' },
-                { id: 'bird', name: 'طيور الصباح', url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-16.mp3' },
-                { id: 'jazz', name: 'جاز ناعم', url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-17.mp3' },
-                { id: 'study', name: 'موسيقى دراسة', url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-18.mp3' },
-                { id: 'alpha', name: 'موجات ألفا', url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3' },
-                { id: 'beta', name: 'موجات بيتا', url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3' },
-                { id: 'theta', name: 'موجات ثيتا', url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3' },
-                { id: 'library', name: 'أجواء مكتبة', url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-4.mp3' },
-                { id: 'train', name: 'قطار بعيد', url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-5.mp3' },
-                { id: 'night', name: 'ليل صامت', url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-6.mp3' },
-                { id: 'guitar', name: 'جيتار كلاسيكي', url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-7.mp3' },
-                { id: 'flute', name: 'ناي شرقي', url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-8.mp3' },
-                { id: 'harp', name: 'قيثارة حالمة', url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-9.mp3' },
-                { id: 'synth', name: 'سينثويف', url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-10.mp3' },
-                { id: 'urban', name: 'هدوء المدينة', url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-11.mp3' },
-                { id: 'ocean', name: 'أعماق المحيط', url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-12.mp3' }
-            ]
+            audio: null,
+            chart: null
         };
 
-        // --- Audio Core ---
-        function initAudio() {
-            const grid = document.getElementById('audio-grid');
-            state.audioList.forEach(sound => {
-                const el = document.createElement('div');
-                el.className = 'sound-grid-item text-[8px] font-bold';
-                el.id = `sound-${sound.id}`;
-                el.innerText = sound.name;
-                el.onclick = () => playAudio(sound.id, sound.url, sound.name);
-                grid.appendChild(el);
-            });
+        function save() {
+            localStorage.setItem('elk_tasks', JSON.stringify(state.tasks));
+            localStorage.setItem('elk_history', JSON.stringify(state.history));
+            localStorage.setItem('elk_xp', state.xp);
+            updateXPUI();
         }
 
-        function playAudio(id, url, name) {
-            stopAllAudio();
-            const audio = new Audio(url);
-            audio.loop = true;
-            audio.play();
-            state.currentAudio = { id, audio };
+        function showAdvice() {
+            const container = document.getElementById('advice-container');
+            const text = document.getElementById('advice-text');
+            text.innerText = advices[Math.floor(Math.random() * advices.length)];
+            container.style.display = 'flex';
+        }
+
+        function shareApp() {
+            const url = "http://doncod.life/";
+            const text = "جرب تطبيق القبة لإدارة الوقت والقرآن الكريم:";
             
-            document.getElementById(`sound-${id}`).classList.add('playing');
-            document.getElementById('playing-now').innerText = name;
-            document.getElementById('visualizer').classList.add('animate-pulse');
-            toast(`شغال الآن: ${name}`);
-        }
-
-        function stopAllAudio() {
-            if(state.currentAudio) {
-                state.currentAudio.audio.pause();
-                document.querySelectorAll('.sound-grid-item').forEach(i => i.classList.remove('playing'));
-            }
-            state.currentAudio = null;
-            document.getElementById('playing-now').innerText = 'صمت';
-            document.getElementById('visualizer').classList.remove('animate-pulse');
-        }
-
-        // --- 3D Background ---
-        let scene, camera, renderer, spheres = [];
-        function init3D() {
-            scene = new THREE.Scene();
-            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-            camera.position.z = 10;
-            renderer = new THREE.WebGLRenderer({ canvas: document.getElementById('canvas-bg'), antialias: true, alpha: true });
-            renderer.setSize(window.innerWidth, window.innerHeight);
-            const light = new THREE.PointLight(0x6366f1, 2, 50);
-            light.position.set(5, 5, 5);
-            scene.add(light);
-            createSpheres();
-            animate();
-        }
-
-        function createSpheres() {
-            spheres.forEach(s => scene.remove(s));
-            spheres = [];
-            if(!state.spheresEnabled) return;
-            const geo = new THREE.SphereGeometry(0.1, 16, 16);
-            for(let i=0; i<30; i++) {
-                const mat = new THREE.MeshPhongMaterial({ color: i%2==0?0x6366f1:0xa855f7, transparent: true, opacity: 0.4 });
-                const s = new THREE.Mesh(geo, mat);
-                s.position.set((Math.random()-0.5)*20, (Math.random()-0.5)*15, (Math.random()-0.5)*10);
-                s.userData = { vel: new THREE.Vector3((Math.random()-0.5)*0.01, (Math.random()-0.5)*0.01, 0) };
-                spheres.push(s);
-                scene.add(s);
+            // محاولة استخدام واجهة مشاركة النظام
+            if (navigator.share) {
+                navigator.share({ title: 'ELKOBBA', text: text, url: url })
+                    .catch(() => copyToClipboard(url));
+            } else {
+                copyToClipboard(url);
             }
         }
 
-        function animate() {
-            requestAnimationFrame(animate);
-            spheres.forEach(s => {
-                s.position.add(s.userData.vel);
-                if(Math.abs(s.position.x) > 10) s.userData.vel.x *= -1;
-                if(Math.abs(s.position.y) > 7) s.userData.vel.y *= -1;
-            });
-            renderer.render(scene, camera);
+        // دالة مخصصة للنسخ تدعم متطلبات البيئة
+        function copyToClipboard(text) {
+            const input = document.createElement('input');
+            input.value = text;
+            document.body.appendChild(input);
+            input.select();
+            document.execCommand('copy');
+            document.body.removeChild(input);
+            showToast("تم نسخ الرابط: http://doncod.life/");
         }
 
-        // --- UI & Logic ---
-        function toast(msg) {
-            const t = document.getElementById('toast');
+        function showToast(msg) {
+            const t = document.getElementById('toast-msg');
             t.innerText = msg;
             t.classList.add('show');
-            setTimeout(() => t.classList.remove('show'), 2000);
+            setTimeout(() => t.classList.remove('show'), 3000);
         }
 
-        function switchView(id) {
-            document.querySelectorAll('.view-section').forEach(s => s.classList.remove('active'));
-            document.querySelectorAll('.btn-action').forEach(b => b.classList.remove('active'));
-            document.getElementById(`section-${id}`).classList.add('active');
-            if(document.getElementById(`nav-${id}`)) document.getElementById(`nav-${id}`).classList.add('active');
-            if(id === 'stats') updateStats();
+        function updateXPUI() {
+            const lvl = Math.floor(state.xp / 100) + 1;
+            const progress = state.xp % 100;
+            const lvlSide = document.getElementById('level-side');
+            const xpVal = document.getElementById('xp-val');
+            const xpFill = document.getElementById('xp-fill');
+            if(lvlSide) lvlSide.innerText = lvl;
+            if(xpVal) xpVal.innerText = state.xp;
+            if(xpFill) xpFill.style.width = `${progress}%`;
+        }
+
+        function addTask() {
+            const val = document.getElementById('task-input').value.trim();
+            if(!val) return;
+            state.tasks.unshift({ 
+                id: Date.now(), 
+                text: val, 
+                completed: false, 
+                createdAt: Date.now() 
+            });
+            document.getElementById('task-input').value = '';
+            save();
+            renderTasks();
+        }
+
+        function completeTask(id) {
+            const task = state.tasks.find(t => t.id === id);
+            if(task) {
+                task.completed = true;
+                task.completedAt = Date.now();
+                state.history.push({ 
+                    id: task.id, 
+                    text: task.text, 
+                    timestamp: task.completedAt 
+                });
+                state.xp += 20;
+                save();
+                renderTasks();
+                showToast("إنجاز رائع! +20 نقطة");
+            }
+        }
+
+        function renderTasks() {
+            const list = document.getElementById('task-list');
+            if(!list) return;
+            const now = Date.now();
+            const eightHours = 8 * 60 * 60 * 1000;
+
+            const visibleTasks = state.tasks.filter(t => {
+                if (!t.completed) return true;
+                return (now - t.completedAt) < eightHours;
+            });
+
+            list.innerHTML = visibleTasks.map(t => `
+                <div class="task-item flex items-center justify-between p-4 bg-white/5 rounded-2xl border border-white/5 ${t.completed ? 'opacity-50' : ''}">
+                    <div class="flex items-center gap-3">
+                        <div class="w-2 h-2 rounded-full ${t.completed ? 'bg-green-500' : 'bg-indigo-500'}"></div>
+                        <span class="font-bold ${t.completed ? 'line-through' : ''}">${t.text}</span>
+                    </div>
+                    <div class="flex gap-2">
+                        ${!t.completed ? `
+                            <button onclick="completeTask(${t.id})" class="p-2 bg-indigo-500/10 text-indigo-400 rounded-lg hover:bg-indigo-500 hover:text-white transition-all">
+                                <i data-lucide="check" class="w-4 h-4"></i>
+                            </button>
+                        ` : `
+                            <span class="text-[8px] opacity-40 italic">مكتملة</span>
+                        `}
+                        <button onclick="deleteTask(${t.id})" class="p-2 bg-red-500/10 text-red-400 rounded-lg hover:bg-red-500 hover:text-white transition-all">
+                            <i data-lucide="trash-2" class="w-4 h-4"></i>
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+            
+            if(visibleTasks.length === 0) list.innerHTML = '<p class="text-center opacity-30 text-[9px] py-10">قائمة المهام فارغة حالياً</p>';
+            lucide.createIcons();
+        }
+
+        function deleteTask(id) {
+            state.tasks = state.tasks.filter(t => t.id !== id);
+            save();
+            renderTasks();
         }
 
         function toggleTimer() {
             const btn = document.getElementById('timer-btn');
-            if (state.timerInterval) {
+            if(state.timerInterval) {
                 clearInterval(state.timerInterval);
                 state.timerInterval = null;
-                btn.innerText = 'استئناف';
+                btn.innerText = "استئناف";
             } else {
-                btn.innerText = 'توقف';
                 state.timerInterval = setInterval(() => {
-                    if (state.timerSeconds > 0) {
+                    if(state.timerSeconds > 0) {
                         state.timerSeconds--;
-                        updateDisplay();
+                        const m = Math.floor(state.timerSeconds / 60);
+                        const s = state.timerSeconds % 60;
+                        document.getElementById('timer-display').innerText = `${m}:${s.toString().padStart(2,'0')}`;
                     } else {
-                        state.sessions++;
+                        clearInterval(state.timerInterval);
+                        state.xp += 50;
                         save();
+                        alert("انتهى وقت التركيز! حصلت على 50 نقطة.");
                         resetTimer();
-                        toast("جلسة مذهلة! استرح قليلاً.");
                     }
                 }, 1000);
+                btn.innerText = "توقف مؤقت";
             }
-        }
-
-        function updateDisplay() {
-            const m = Math.floor(state.timerSeconds / 60);
-            const s = state.timerSeconds % 60;
-            document.getElementById('timer-display').innerText = `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
         }
 
         function resetTimer() {
             clearInterval(state.timerInterval);
             state.timerInterval = null;
             state.timerSeconds = 25 * 60;
-            updateDisplay();
-            document.getElementById('timer-btn').innerText = 'ابدأ الجلسة';
+            document.getElementById('timer-display').innerText = "25:00";
+            document.getElementById('timer-btn').innerText = "ابدأ التركيز";
         }
 
-        function addTask() {
-            const input = document.getElementById('task-input');
-            if (!input.value.trim()) return;
-            state.tasks.push({ id: Date.now(), text: input.value, done: false });
-            input.value = '';
-            save(); renderTasks();
-        }
-
-        function toggleTask(id) {
-            state.tasks = state.tasks.map(t => t.id === id ? {...t, done: !t.done} : t);
-            save(); renderTasks();
-        }
-
-        function renderTasks() {
-            const list = document.getElementById('task-list');
-            list.innerHTML = state.tasks.map(t => `
-                <div class="flex items-center justify-between p-2 bg-white/5 rounded-lg border border-white/0">
-                    <div class="flex items-center gap-2 cursor-pointer flex-1" onclick="toggleTask(${t.id})">
-                        <div class="w-3 h-3 rounded border border-indigo-500/40 flex items-center justify-center ${t.done ? 'bg-indigo-600' : ''}">
-                            ${t.done ? '✓' : ''}
-                        </div>
-                        <span class="text-[9px] ${t.done ? 'line-through opacity-40' : ''}">${t.text}</span>
+        function initAudioGrid() {
+            const grid = document.getElementById('audio-grid');
+            if(!grid) return;
+            grid.innerHTML = surahs.map((name, i) => {
+                const id = (i + 1).toString().padStart(3, '0');
+                return `
+                    <div class="surah-card flex justify-between items-center" id="surah-${id}" onclick="playQuran('${id}', '${name}')">
+                        <span class="font-bold">${name}</span>
+                        <i data-lucide="play" class="w-3 h-3 opacity-50"></i>
                     </div>
-                </div>
-            `).join('');
+                `;
+            }).join('');
+            lucide.createIcons();
         }
 
-        function toggleAmbient(mode) {
-            document.getElementById('main-body').className = `mode-${mode}`;
-            document.getElementById('ambient-status').innerText = mode === 'focus' ? 'تركيز فائق' : 'استرخاء تام';
-            toast("تم تغيير الجو العام");
+        function playQuran(id, name) {
+            if(state.audio) state.audio.pause();
+            const url = `https://server7.mp3quran.net/basit/${id}.mp3`;
+            state.audio = new Audio(url);
+            document.getElementById('audio-status').classList.remove('hidden');
+            document.getElementById('playing-title').innerText = `تلاوة ${name}`;
+            state.audio.play();
+            document.querySelectorAll('.surah-card').forEach(c => c.classList.remove('playing'));
+            const card = document.getElementById(`surah-${id}`);
+            if(card) card.classList.add('playing');
         }
 
-        function toggleSpheres() {
-            state.spheresEnabled = !state.spheresEnabled;
-            createSpheres();
-            toast(state.spheresEnabled ? "تفعيل الجسيمات" : "إيقاف الجسيمات");
+        function stopAudio() {
+            if(state.audio) state.audio.pause();
+            document.getElementById('audio-status').classList.add('hidden');
+            document.querySelectorAll('.surah-card').forEach(c => c.classList.remove('playing'));
         }
 
-        function startLongBreak() {
-            resetTimer();
-            state.timerSeconds = 15 * 60;
-            updateDisplay();
-            toast("استراحة 15 دقيقة");
+        function filterSurahs() {
+            const q = document.getElementById('surah-search').value.trim();
+            document.querySelectorAll('.surah-card').forEach(card => {
+                card.style.display = card.innerText.includes(q) ? 'flex' : 'none';
+            });
         }
 
-        function clearAllData() {
-            if(confirm("مسح كل البيانات؟")) { localStorage.clear(); location.reload(); }
-        }
-
-        function save() {
-            localStorage.setItem('dc_tasks_audio', JSON.stringify(state.tasks));
-            localStorage.setItem('dc_sessions_audio', state.sessions);
-        }
-
-        function updateStats() {
-            document.getElementById('total-sessions').innerText = state.sessions;
-            document.getElementById('total-minutes').innerText = state.sessions * 25;
-            document.getElementById('total-tasks').innerText = state.tasks.filter(t => t.done).length;
-            document.getElementById('level').innerText = Math.floor(state.sessions/3) + 1;
+        function switchView(id) {
+            document.querySelectorAll('.view-section').forEach(v => v.classList.remove('active'));
+            document.querySelectorAll('.btn-action').forEach(b => b.classList.remove('active'));
+            document.getElementById(`section-${id}`).classList.add('active');
+            document.getElementById(`nav-${id}`).classList.add('active');
             
-            const ctx = document.getElementById('statsChart').getContext('2d');
-            if(window.myChart) window.myChart.destroy();
-            window.myChart = new Chart(ctx, {
-                type: 'line',
+            const titles = { 'main': 'لوحة التحكم', 'audio': 'المصحف المرتل' };
+            document.getElementById('page-title').innerText = titles[id] || 'القبة';
+        }
+
+        function toggleTheme() {
+            state.isDark = !state.isDark;
+            localStorage.setItem('elk_theme', state.isDark ? 'dark' : 'light');
+            document.getElementById('main-body').classList.toggle('light-theme', !state.isDark);
+        }
+
+        function openTracker() {
+            document.getElementById('modal-tracker').classList.add('active');
+            
+            const now = new Date();
+            const todayStr = now.toISOString().split('T')[0];
+            
+            const daily = state.history.filter(h => new Date(h.timestamp).toISOString().split('T')[0] === todayStr).length;
+            const weekly = state.history.filter(h => (now - h.timestamp) < 7 * 24 * 60 * 60 * 1000).length;
+            const monthly = state.history.filter(h => (now - h.timestamp) < 30 * 24 * 60 * 60 * 1000).length;
+
+            document.getElementById('stat-day').innerText = daily;
+            document.getElementById('stat-week').innerText = weekly;
+            document.getElementById('stat-month').innerText = monthly;
+            document.getElementById('stat-xp').innerText = state.xp;
+
+            setTimeout(renderChart, 200);
+        }
+
+        function renderChart() {
+            const ctx = document.getElementById('trackerChart').getContext('2d');
+            if(state.chart) state.chart.destroy();
+
+            const labels = ['ح', 'ن', 'ث', 'ر', 'خ', 'ج', 'س'];
+            const dataCounts = new Array(7).fill(0);
+            
+            state.history.forEach(h => {
+                const day = new Date(h.timestamp).getDay();
+                dataCounts[day]++;
+            });
+
+            state.chart = new Chart(ctx, {
+                type: 'bar',
                 data: {
-                    labels: ['S', 'M', 'T', 'W', 'T', 'F', 'S'],
-                    datasets: [{ data: [2, 5, 3, 8, 4, 10, state.sessions], borderColor: '#6366f1', tension: 0.4 }]
+                    labels: labels,
+                    datasets: [{ 
+                        label: 'المهام المكتملة',
+                        data: dataCounts, 
+                        backgroundColor: '#6366f1',
+                        borderRadius: 8
+                    }]
                 },
-                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { display: false }, x: { grid: { display: false } } } }
+                options: { 
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } }, 
+                    scales: { 
+                        y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { font: { size: 9 } } },
+                        x: { grid: { display: false }, ticks: { font: { size: 10 } } }
+                    } 
+                }
+            });
+        }
+
+        function closeModal(id) { document.getElementById(`modal-${id}`).classList.remove('active'); }
+        
+        function clearAllData() { 
+            localStorage.clear(); 
+            location.reload(); 
+        }
+
+        function contactSupport() { 
+            window.open('https://wa.me/212626014697', '_blank'); 
+        }
+
+        function initVisuals() {
+            const canvas = document.getElementById('canvas-bg');
+            if(!canvas) return;
+            const scene = new THREE.Scene();
+            const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            
+            const geo = new THREE.TorusGeometry(10, 0.05, 16, 100);
+            const mat = new THREE.MeshBasicMaterial({ color: 0x6366f1, wireframe: true, transparent: true, opacity: 0.08 });
+            const mesh = new THREE.Mesh(geo, mat);
+            scene.add(mesh);
+            
+            const cam = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
+            cam.position.z = 15;
+
+            function animate() { 
+                requestAnimationFrame(animate); 
+                mesh.rotation.x += 0.001; 
+                mesh.rotation.y += 0.0015; 
+                renderer.render(scene, cam); 
+            }
+            animate();
+
+            window.addEventListener('resize', () => {
+                cam.aspect = window.innerWidth / window.innerHeight;
+                cam.updateProjectionMatrix();
+                renderer.setSize(window.innerWidth, window.innerHeight);
             });
         }
 
         window.onload = () => {
-            init3D();
-            initAudio();
             renderTasks();
-            updateDisplay();
-            window.addEventListener('resize', () => {
-                camera.aspect = window.innerWidth / window.innerHeight;
-                camera.updateProjectionMatrix();
-                renderer.setSize(window.innerWidth, window.innerHeight);
-            });
+            updateXPUI();
+            initAudioGrid();
+            initVisuals();
+            if(!state.isDark) document.getElementById('main-body').classList.add('light-theme');
+            lucide.createIcons();
         };
     </script>
 </body>
