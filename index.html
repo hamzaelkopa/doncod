@@ -3,335 +3,350 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>doncod - محاكي السيارات الواقعي</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <title>منظم الوقت الاحترافي - FocusFlow</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700&display=swap" rel="stylesheet">
     <style>
-        body { margin: 0; overflow: hidden; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #87ceeb; }
-        canvas { display: block; }
-        #ui-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; }
-        .interactive { pointer-events: auto; }
-        .glass { background: rgba(255, 255, 255, 0.25); backdrop-filter: blur(15px); border: 1px solid rgba(255,255,255,0.4); box-shadow: 0 8px 32px rgba(0,0,0,0.1); }
-        @keyframes drift {
-            0% { transform: translateX(0); }
-            50% { transform: translateX(5px); }
-            100% { transform: translateX(0); }
-        }
-        .speed-gauge { animation: drift 2s infinite ease-in-out; }
+        body { font-family: 'Tajawal', sans-serif; background-color: #f1f5f9; }
+        .glass-card { background: #ffffff; border-radius: 1.25rem; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05); }
+        .tab-active { border-bottom: 3px solid #2563eb; color: #2563eb; font-weight: bold; }
+        .task-done { text-decoration: line-through; color: #94a3b8; }
+        @keyframes pulse-soft { 0%, 100% { opacity: 1; } 50% { opacity: 0.8; } }
+        .timer-running { animation: pulse-soft 2s infinite; }
     </style>
 </head>
-<body>
+<body class="min-h-screen">
 
-    <!-- UI Layer -->
-    <div id="ui-layer" class="flex flex-col justify-between p-6 text-slate-800">
-        <div class="flex justify-between items-start">
-            <div class="glass p-4 rounded-2xl">
-                <h1 class="text-3xl font-bold tracking-tighter text-blue-900">doncod</h1>
-                <p class="text-xs font-semibold opacity-80">تم تطويرها من قبل حمزة القبة</p>
+    <!-- Header -->
+    <header class="bg-white border-b sticky top-0 z-50">
+        <div class="max-w-5xl mx-auto px-6 py-4 flex justify-between items-center">
+            <div class="flex items-center gap-2">
+                <div class="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center text-white font-bold">F</div>
+                <h1 class="text-xl font-bold text-slate-800">FocusFlow</h1>
             </div>
+            <nav class="flex gap-8">
+                <button onclick="switchTab('main')" id="btn-main" class="tab-active py-2 transition-all">الرئيسية</button>
+                <button onclick="switchTab('dashboard')" id="btn-dashboard" class="py-2 text-slate-500 hover:text-blue-600 transition-all">لوحة التحكم</button>
+            </nav>
+        </div>
+    </header>
+
+    <main class="max-w-5xl mx-auto px-6 py-8">
+        
+        <!-- Main Content -->
+        <div id="tab-main" class="grid grid-cols-1 lg:grid-cols-12 gap-8">
             
-            <div id="msg-box" class="glass px-8 py-3 rounded-full opacity-0 transition-all duration-500 font-bold text-blue-900 shadow-xl transform -translate-y-4">
-                رسالة النظام
-            </div>
-
-            <div class="glass p-4 rounded-2xl text-right">
-                <div class="text-sm font-bold opacity-80">المال المجموع</div>
-                <div id="money-display" class="text-2xl font-mono text-yellow-600 font-black">$0</div>
-            </div>
-        </div>
-
-        <div class="flex justify-between items-end">
-            <div class="glass p-6 rounded-full w-40 h-40 flex flex-col items-center justify-center speed-gauge border-4 border-white">
-                <div id="speed-val" class="text-4xl font-black text-blue-900">0</div>
-                <div class="text-xs uppercase font-bold">كم/س</div>
-            </div>
-
-            <div class="flex gap-4 interactive">
-                <button onclick="toggleGarage()" class="glass p-4 rounded-xl hover:bg-white/40 transition font-bold text-blue-900 shadow-lg">
-                    🚗 الكراج والمتجر
-                </button>
-                <div class="flex flex-col gap-2">
-                    <div class="text-xs text-center font-bold">تغيير اللون</div>
-                    <input type="color" id="colorPicker" value="#ff0000" onchange="changeCarColor(this.value)" class="w-12 h-12 rounded-lg cursor-pointer bg-transparent border-none">
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Garage Modal -->
-    <div id="garage-modal" class="fixed inset-0 bg-white/40 hidden items-center justify-center z-50 p-4 backdrop-blur-md">
-        <div class="glass max-w-2xl w-full p-8 rounded-3xl text-blue-900 shadow-2xl">
-            <div class="flex justify-between mb-6">
-                <h2 class="text-2xl font-black italic underline decoration-yellow-500">معرض السيارات الحقيقية</h2>
-                <button onclick="toggleGarage()" class="text-3xl font-bold">&times;</button>
-            </div>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4" id="car-list">
-                <div class="bg-white/40 p-4 rounded-xl flex justify-between items-center border border-white">
-                    <div>
-                        <h3 class="font-bold">Sport Phantom</h3>
-                        <p class="text-sm opacity-70">سرعة فائقة</p>
+            <!-- Timer Section (4 Cols) -->
+            <div class="lg:col-span-5 space-y-6">
+                <div class="glass-card p-10 text-center border border-blue-50">
+                    <h2 class="text-slate-500 font-medium mb-4">عداد التركيز</h2>
+                    <div id="timer-display" class="text-7xl font-black text-slate-800 mb-8 tracking-tighter">25:00</div>
+                    
+                    <div class="flex justify-center gap-3 mb-8">
+                        <button onclick="toggleTimer()" id="timer-btn" class="bg-blue-600 text-white px-10 py-3 rounded-xl font-bold hover:bg-blue-700 shadow-lg shadow-blue-200 transition-all active:scale-95">ابدأ العمل</button>
+                        <button onclick="resetTimer()" class="bg-slate-100 text-slate-600 px-5 py-3 rounded-xl hover:bg-slate-200 transition-all">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
+                        </button>
                     </div>
-                    <button onclick="buyCar(500, 'sport')" class="bg-yellow-500 px-4 py-2 rounded-lg font-black text-white hover:bg-yellow-400 transition shadow-md border-b-4 border-yellow-700">$500</button>
-                </div>
-                <div class="bg-white/40 p-4 rounded-xl flex justify-between items-center border border-white">
-                    <div>
-                        <h3 class="font-bold">GT Master</h3>
-                        <p class="text-sm opacity-70">ثبات واحترافية</p>
+
+                    <div class="inline-flex p-1 bg-slate-100 rounded-xl w-full">
+                        <button onclick="setMode(25)" class="flex-1 py-2 rounded-lg text-sm font-bold hover:bg-white hover:shadow-sm transition-all">تركيز</button>
+                        <button onclick="setMode(5)" class="flex-1 py-2 rounded-lg text-sm font-bold hover:bg-white hover:shadow-sm transition-all">راحة</button>
+                        <button onclick="setMode(15)" class="flex-1 py-2 rounded-lg text-sm font-bold hover:bg-white hover:shadow-sm transition-all">طويلة</button>
                     </div>
-                    <button onclick="buyCar(1200, 'gt')" class="bg-yellow-500 px-4 py-2 rounded-lg font-black text-white hover:bg-yellow-400 transition shadow-md border-b-4 border-yellow-700">$1200</button>
+                </div>
+
+                <div class="glass-card p-6 bg-blue-600 text-white shadow-blue-200">
+                    <h3 class="font-bold mb-1 opacity-90 text-sm">إنجاز اليوم</h3>
+                    <div class="flex items-end justify-between">
+                        <span class="text-3xl font-bold" id="daily-percent">0%</span>
+                        <span class="text-xs opacity-80" id="daily-fraction">0 من 0 مهام</span>
+                    </div>
+                    <div class="w-full bg-blue-400/30 h-2 mt-3 rounded-full overflow-hidden">
+                        <div id="progress-bar-inner" class="bg-white h-full transition-all duration-500" style="width: 0%"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tasks Section (7 Cols) -->
+            <div class="lg:col-span-7 space-y-6">
+                <div class="glass-card p-6">
+                    <h2 class="text-xl font-bold mb-6 flex items-center gap-2">
+                        قائمة المهام
+                        <span id="task-badge" class="bg-blue-100 text-blue-600 text-xs px-2 py-1 rounded-full">0</span>
+                    </h2>
+                    
+                    <form onsubmit="event.preventDefault(); addTask();" class="flex gap-2 mb-8">
+                        <input type="text" id="task-input" autocomplete="off" placeholder="أضف مهمة جديدة للتركيز عليها..." class="flex-1 border-2 border-slate-100 rounded-xl px-4 py-3 focus:outline-none focus:border-blue-500 transition-all">
+                        <button type="submit" class="bg-slate-800 text-white px-6 py-3 rounded-xl hover:bg-slate-900 shadow-md transition-all">إضافة</button>
+                    </form>
+                    
+                    <div id="task-list" class="space-y-3 min-h-[300px]">
+                        <!-- Tasks -->
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
+
+        <!-- Dashboard Content -->
+        <div id="tab-dashboard" class="hidden space-y-8">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <!-- Analytics -->
+                <div class="lg:col-span-2 glass-card p-8">
+                    <div class="flex justify-between items-center mb-8">
+                        <h2 class="text-xl font-bold">تحليل الأداء الأسبوعي</h2>
+                        <span class="text-sm text-slate-400 italic">يتم التحديث تلقائياً</span>
+                    </div>
+                    <div style="height: 350px;">
+                        <canvas id="weeklyChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- History -->
+                <div class="lg:col-span-1 glass-card p-6 flex flex-col">
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-lg font-bold">المنجز سابقاً</h2>
+                        <button onclick="clearHistory()" class="text-red-400 text-xs hover:text-red-600">مسح الكل</button>
+                    </div>
+                    <div id="history-list" class="space-y-3 flex-1 overflow-y-auto max-h-[400px] pr-2">
+                        <!-- History items -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </main>
 
     <script>
-        let scene, camera, renderer, car, road, sun, skyLight;
-        let speed = 0;
-        let money = 0;
-        let carColor = 0xff0000;
-        let keys = {};
-        let coins = [];
-        let buildings = [];
-        let trafficCars = [];
-        const MAX_SPEED = 2.8;
-        const ACCELERATION = 0.012;
-        const FRICTION = 0.005;
-
-        function init() {
-            scene = new THREE.Scene();
-            scene.background = new THREE.Color(0xaedefc); 
-            scene.fog = new THREE.Fog(0xaedefc, 50, 300);
-
-            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-            camera.position.set(0, 4, 11);
-
-            renderer = new THREE.WebGLRenderer({ antialias: true });
-            renderer.setSize(window.innerWidth, window.innerHeight);
-            renderer.shadowMap.enabled = true;
-            renderer.toneMapping = THREE.NoToneMapping; // تغيير لضمان دقة الألوان
-            document.body.appendChild(renderer.domElement);
-
-            const ambientLight = new THREE.AmbientLight(0xffffff, 0.9);
-            scene.add(ambientLight);
-
-            sun = new THREE.DirectionalLight(0xffffff, 1.0);
-            sun.position.set(10, 50, 20);
-            sun.castShadow = true;
-            scene.add(sun);
-
-            createRoad();
-            createProfessionalCar();
-            spawnCoins();
-            createCity();
-            spawnTraffic();
-
-            window.addEventListener('keydown', e => keys[e.code] = true);
-            window.addEventListener('keyup', e => keys[e.code] = false);
-            window.addEventListener('resize', onWindowResize);
-
-            animate();
-        }
-
-        function createRoad() {
-            const roadGeometry = new THREE.PlaneGeometry(26, 10000);
-            const roadMaterial = new THREE.MeshStandardMaterial({ color: 0x333333, roughness: 0.8 });
-            road = new THREE.Mesh(roadGeometry, roadMaterial);
-            road.rotation.x = -Math.PI / 2;
-            road.receiveShadow = true;
-            scene.add(road);
-
-            const sidewalkGeo = new THREE.BoxGeometry(2, 0.6, 10000);
-            const sidewalkMat = new THREE.MeshStandardMaterial({ color: 0xcccccc });
-            const leftSidewalk = new THREE.Mesh(sidewalkGeo, sidewalkMat);
-            leftSidewalk.position.set(-14, 0.3, 0);
-            scene.add(leftSidewalk);
-            const rightSidewalk = new THREE.Mesh(sidewalkGeo, sidewalkMat);
-            rightSidewalk.position.set(14, 0.3, 0);
-            scene.add(rightSidewalk);
-
-            for(let i = 0; i < 400; i++) {
-                const stripe = new THREE.Mesh(new THREE.PlaneGeometry(0.5, 7), new THREE.MeshBasicMaterial({ color: 0xffffff }));
-                stripe.rotation.x = -Math.PI / 2;
-                stripe.position.set(0, 0.04, -i * 25);
-                scene.add(stripe);
+        // Data Structures
+        let state = {
+            tasks: JSON.parse(localStorage.getItem('ff_tasks')) || [],
+            stats: JSON.parse(localStorage.getItem('ff_stats')) || {
+                "السبت": 0, "الأحد": 0, "الاثنين": 0, "الثلاثاء": 0, "الأربعاء": 0, "الخميس": 0, "الجمعة": 0
             }
-        }
+        };
 
-        function createCity() {
-            const buildGeo = new THREE.BoxGeometry(1, 1, 1);
-            for(let i = 0; i < 120; i++) {
-                const side = i % 2 === 0 ? 1 : -1;
-                const h = 15 + Math.random() * 50;
-                const w = 10 + Math.random() * 8;
-                const d = 10 + Math.random() * 8;
-                const bMat = new THREE.MeshStandardMaterial({ 
-                    color: new THREE.Color().setHSL(Math.random() * 0.1 + 0.5, 0.3, 0.7),
-                    roughness: 0.5
-                });
-                const building = new THREE.Mesh(buildGeo, bMat);
-                building.scale.set(w, h, d);
-                building.position.set(side * (25 + Math.random() * 15), h/2, -i * 60);
-                building.receiveShadow = true;
-                scene.add(building);
-                buildings.push(building);
-            }
-        }
+        let timerSeconds = 25 * 60;
+        let timerInterval = null;
 
-        function createProfessionalCar() {
-            const carGroup = new THREE.Group();
+        // Navigation
+        function switchTab(tab) {
+            document.getElementById('tab-main').style.display = tab === 'main' ? 'grid' : 'none';
+            document.getElementById('tab-dashboard').style.display = tab === 'dashboard' ? 'block' : 'none';
             
-            // تعديل خصائص المادة لتكون الألوان فاتحة ودقيقة
-            const bodyMat = new THREE.MeshPhongMaterial({ 
-                color: carColor, 
-                shininess: 100,
-                specular: 0x222222 
-            });
-
-            const body = new THREE.Mesh(
-                new THREE.BoxGeometry(2.3, 0.6, 4.6),
-                bodyMat
-            );
-            body.position.y = 0.65;
-            body.castShadow = true;
-            carGroup.add(body);
-
-            const cabin = new THREE.Mesh(
-                new THREE.BoxGeometry(1.8, 0.75, 2.3),
-                new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.1 })
-            );
-            cabin.position.set(0, 1.25, 0.2);
-            carGroup.add(cabin);
-
-            const spoiler = new THREE.Mesh(new THREE.BoxGeometry(2.3, 0.1, 0.7), new THREE.MeshStandardMaterial({ color: 0x000000 }));
-            spoiler.position.set(0, 1.45, 2);
-            carGroup.add(spoiler);
-
-            const wheelGeo = new THREE.CylinderGeometry(0.5, 0.5, 0.55, 32);
-            const wheelMat = new THREE.MeshStandardMaterial({ color: 0x111111 });
-            [[-1.15, 0.5, 1.6], [1.15, 0.5, 1.6], [-1.15, 0.5, -1.6], [1.15, 0.5, -1.6]].forEach(p => {
-                const w = new THREE.Mesh(wheelGeo, wheelMat);
-                w.rotation.z = Math.PI/2;
-                w.position.set(...p);
-                w.castShadow = true;
-                carGroup.add(w);
-            });
-
-            car = carGroup;
-            scene.add(car);
+            document.getElementById('btn-main').className = tab === 'main' ? 'tab-active py-2 transition-all' : 'py-2 text-slate-500 transition-all';
+            document.getElementById('btn-dashboard').className = tab === 'dashboard' ? 'tab-active py-2 transition-all' : 'py-2 text-slate-500 transition-all';
+            
+            if (tab === 'dashboard') initChart();
         }
 
-        function spawnTraffic() {
-            for(let i = 0; i < 20; i++) {
-                const tCar = new THREE.Group();
-                const tBody = new THREE.Mesh(
-                    new THREE.BoxGeometry(2.1, 0.9, 4.2),
-                    new THREE.MeshStandardMaterial({ color: new THREE.Color().setHSL(Math.random(), 0.5, 0.5) })
-                );
-                tBody.position.y = 0.7;
-                tCar.add(tBody);
-                tCar.position.set((Math.random()-0.5)*20, 0, -200 - (i * 120));
-                scene.add(tCar);
-                trafficCars.push({ mesh: tCar, speed: 0.7 + Math.random() * 0.6 });
+        // Timer
+        function updateDisplay() {
+            const m = Math.floor(timerSeconds / 60);
+            const s = timerSeconds % 60;
+            const text = `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+            document.getElementById('timer-display').innerText = text;
+            document.title = timerInterval ? `(${text}) FocusFlow` : 'FocusFlow';
+        }
+
+        function toggleTimer() {
+            const btn = document.getElementById('timer-btn');
+            const display = document.getElementById('timer-display');
+            
+            if (timerInterval) {
+                clearInterval(timerInterval);
+                timerInterval = null;
+                btn.innerText = 'استئناف';
+                btn.className = "bg-blue-600 text-white px-10 py-3 rounded-xl font-bold shadow-lg shadow-blue-200 transition-all";
+                display.classList.remove('timer-running');
+            } else {
+                btn.innerText = 'إيقاف مؤقت';
+                btn.className = "bg-orange-500 text-white px-10 py-3 rounded-xl font-bold shadow-lg shadow-orange-200 transition-all";
+                display.classList.add('timer-running');
+                timerInterval = setInterval(() => {
+                    if (timerSeconds > 0) {
+                        timerSeconds--;
+                        updateDisplay();
+                    } else {
+                        finishTimer();
+                    }
+                }, 1000);
             }
         }
 
-        function spawnCoins() {
-            const coinGeo = new THREE.TorusGeometry(0.5, 0.15, 16, 100);
-            const coinMat = new THREE.MeshStandardMaterial({ 
-                color: 0xffd700, 
-                metalness: 0.5, 
-                roughness: 0.2,
-                emissive: 0xffa500,
-                emissiveIntensity: 0.4
+        function finishTimer() {
+            clearInterval(timerInterval);
+            timerInterval = null;
+            playSound();
+            alert("عمل رائع! انتهت جلسة التركيز.");
+            resetTimer();
+        }
+
+        function playSound() {
+            const msg = new SpeechSynthesisUtterance("انتهى الوقت، خذ قسطاً من الراحة");
+            msg.lang = 'ar-SA';
+            window.speechSynthesis.speak(msg);
+        }
+
+        function resetTimer() {
+            clearInterval(timerInterval);
+            timerInterval = null;
+            timerSeconds = 25 * 60;
+            updateDisplay();
+            document.getElementById('timer-btn').innerText = 'ابدأ العمل';
+            document.getElementById('timer-btn').className = "bg-blue-600 text-white px-10 py-3 rounded-xl font-bold shadow-lg shadow-blue-200 transition-all";
+            document.getElementById('timer-display').classList.remove('timer-running');
+        }
+
+        function setMode(mins) {
+            resetTimer();
+            timerSeconds = mins * 60;
+            updateDisplay();
+        }
+
+        // Tasks Logic
+        function addTask() {
+            const input = document.getElementById('task-input');
+            const text = input.value.trim();
+            if (!text) return;
+
+            state.tasks.push({
+                id: Date.now(),
+                text: text,
+                done: false,
+                day: getCurrentDay()
             });
-            for(let i = 0; i < 45; i++) {
-                const coin = new THREE.Mesh(coinGeo, coinMat);
-                coin.rotation.y = Math.PI / 2;
-                coin.position.set((Math.random() - 0.5) * 20, 1.2, -150 - (i * 50));
-                scene.add(coin);
-                coins.push(coin);
+
+            input.value = '';
+            save();
+            render();
+        }
+
+        function toggleTask(id) {
+            state.tasks = state.tasks.map(t => t.id === id ? {...t, done: !t.done} : t);
+            updateStats();
+            save();
+            render();
+        }
+
+        function removeTask(id) {
+            state.tasks = state.tasks.filter(t => t.id !== id);
+            updateStats();
+            save();
+            render();
+        }
+
+        function updateStats() {
+            const today = getCurrentDay();
+            const todayTasks = state.tasks.filter(t => t.day === today);
+            if (todayTasks.length === 0) {
+                state.stats[today] = 0;
+            } else {
+                const completed = todayTasks.filter(t => t.done).length;
+                state.stats[today] = Math.round((completed / todayTasks.length) * 100);
             }
         }
 
-        function checkCollisions() {
-            coins.forEach(coin => {
-                if (coin.visible && car.position.distanceTo(coin.position) < 2.8) {
-                    coin.visible = false;
-                    money += 150;
-                    updateUI();
-                    showMessage("+$150 ذهب حقيقي!");
+        function getCurrentDay() {
+            const days = ["الأحد", "الاثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت"];
+            return days[new Date().getDay()];
+        }
+
+        function save() {
+            localStorage.setItem('ff_tasks', JSON.stringify(state.tasks));
+            localStorage.setItem('ff_stats', JSON.stringify(state.stats));
+        }
+
+        function render() {
+            // Task List
+            const list = document.getElementById('task-list');
+            const activeTasks = state.tasks.filter(t => !t.done);
+            document.getElementById('task-badge').innerText = activeTasks.length;
+
+            if (activeTasks.length === 0) {
+                list.innerHTML = `<div class="text-center py-10 text-slate-400">لا توجد مهام نشطة حالياً. ابدأ بإضافة شيء جديد!</div>`;
+            } else {
+                list.innerHTML = activeTasks.map(t => `
+                    <div class="flex items-center justify-between p-4 bg-slate-50 border border-slate-100 rounded-xl group transition-all hover:border-blue-200">
+                        <div class="flex items-center gap-4">
+                            <input type="checkbox" onchange="toggleTask(${t.id})" class="w-5 h-5 cursor-pointer accent-blue-600">
+                            <span class="font-medium text-slate-700">${t.text}</span>
+                        </div>
+                        <button onclick="removeTask(${t.id})" class="text-slate-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" /></svg>
+                        </button>
+                    </div>
+                `).join('');
+            }
+
+            // History
+            const historyList = document.getElementById('history-list');
+            const doneTasks = state.tasks.filter(t => t.done);
+            historyList.innerHTML = doneTasks.length ? doneTasks.reverse().map(t => `
+                <div class="p-3 bg-white border border-slate-100 rounded-lg flex justify-between items-center shadow-sm">
+                    <span class="line-through text-slate-400 text-sm">${t.text}</span>
+                    <button onclick="removeTask(${t.id})" class="text-xs text-red-300 hover:text-red-500">حذف</button>
+                </div>
+            `).join('') : '<p class="text-center text-slate-300 text-sm mt-10">سجل الإنجاز فارغ</p>';
+
+            // Progress Bar
+            const todayTasks = state.tasks.filter(t => t.day === getCurrentDay());
+            const completedCount = todayTasks.filter(t => t.done).length;
+            const percent = todayTasks.length ? Math.round((completedCount / todayTasks.length) * 100) : 0;
+            
+            document.getElementById('daily-percent').innerText = percent + '%';
+            document.getElementById('daily-fraction').innerText = `${completedCount} من ${todayTasks.length} مهام`;
+            document.getElementById('progress-bar-inner').style.width = percent + '%';
+        }
+
+        function clearHistory() {
+            if (confirm("هل تريد مسح جميع المهام المكتملة من السجل؟")) {
+                state.tasks = state.tasks.filter(t => !t.done);
+                updateStats();
+                save();
+                render();
+            }
+        }
+
+        // Chart
+        let chartInstance = null;
+        function initChart() {
+            const ctx = document.getElementById('weeklyChart').getContext('2d');
+            if (chartInstance) chartInstance.destroy();
+
+            const labels = ["السبت", "الأحد", "الاثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة"];
+            const data = labels.map(day => state.stats[day] || 0);
+
+            chartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'نسبة الإنجاز %',
+                        data: data,
+                        backgroundColor: '#3b82f6',
+                        borderRadius: 8,
+                        hoverBackgroundColor: '#2563eb'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        y: { beginAtZero: true, max: 100, grid: { display: false } },
+                        x: { grid: { display: false } }
+                    }
                 }
-                if (coin.position.z > car.position.z + 20) {
-                    coin.position.z -= 2250;
-                    coin.visible = true;
-                }
-                coin.rotation.y += 0.1;
-                coin.position.y = 1.2 + Math.sin(Date.now() * 0.005) * 0.2;
             });
-
-            trafficCars.forEach(t => {
-                t.mesh.position.z -= t.speed;
-                if (t.mesh.position.z > car.position.z + 60) {
-                    t.mesh.position.z -= 2400;
-                    t.mesh.position.x = (Math.random()-0.5)*20;
-                }
-                if (car.position.distanceTo(t.mesh.position) < 3.2) {
-                    speed *= 0.4;
-                    showMessage("حادث! انتبه يا حمزة");
-                    t.mesh.position.z -= 15;
-                }
-            });
         }
 
-        function animate() {
-            requestAnimationFrame(animate);
-            if (keys['ArrowUp'] || keys['KeyW']) speed = Math.min(speed + ACCELERATION, MAX_SPEED);
-            else speed = Math.max(speed - FRICTION, 0);
-
-            if (keys['ArrowLeft'] || keys['KeyA']) {
-                car.position.x = Math.max(car.position.x - 0.18, -11);
-                car.rotation.z = 0.05;
-            } else if (keys['ArrowRight'] || keys['KeyD']) {
-                car.position.x = Math.min(car.position.x + 0.18, 11);
-                car.rotation.z = -0.05;
-            } else car.rotation.z = 0;
-
-            car.position.z -= speed;
-            camera.position.z = car.position.z + 12;
-            camera.position.x = car.position.x * 0.4;
-            camera.position.y = 4 + speed;
-            camera.lookAt(car.position.x, 1, car.position.z - 20);
-
-            checkCollisions();
-            renderer.render(scene, camera);
-        }
-
-        function changeCarColor(c) { 
-            // تحديث اللون بشكل مباشر وفاتح
-            car.children[0].material.color.set(c); 
-            showMessage("تم تغيير لون السيارة!"); 
-        }
-
-        function toggleGarage() { const m = document.getElementById('garage-modal'); m.classList.toggle('hidden'); m.classList.toggle('flex'); }
-        function updateUI() { 
-            document.getElementById('money-display').innerText = `$${Math.floor(money)}`; 
-            document.getElementById('speed-val').innerText = Math.floor(speed * 110); 
-        }
-        
-        function showMessage(t) { 
-            const b = document.getElementById('msg-box'); 
-            b.innerText = t; 
-            b.style.opacity = "1"; 
-            b.style.transform = "translateY(0)"; 
-            setTimeout(() => {
-                b.style.opacity = "0";
-                b.style.transform = "translateY(-1rem)"; 
-            }, 2500); 
-        }
-        
-        function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeight; camera.updateProjectionMatrix(); renderer.setSize(window.innerWidth, window.innerHeight); }
-
-        window.onload = init;
+        // Init
+        window.onload = () => {
+            render();
+            updateDisplay();
+        };
     </script>
 </body>
 </html>
