@@ -3,221 +3,369 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>منظم الوقت الاحترافي - FocusFlow</title>
+    <title>doncod.life | الإنتاجية الذكية</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;900&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Tajawal', sans-serif; background-color: #f1f5f9; }
-        .glass-card { background: #ffffff; border-radius: 1.25rem; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05); }
-        .tab-active { border-bottom: 3px solid #2563eb; color: #2563eb; font-weight: bold; }
-        .task-done { text-decoration: line-through; color: #94a3b8; }
-        @keyframes pulse-soft { 0%, 100% { opacity: 1; } 50% { opacity: 0.8; } }
-        .timer-running { animation: pulse-soft 2s infinite; }
-    </style>
-</head>
-<body class="min-h-screen">
-
-    <!-- Header -->
-    <header class="bg-white border-b sticky top-0 z-50">
-        <div class="max-w-5xl mx-auto px-6 py-4 flex justify-between items-center">
-            <div class="flex items-center gap-2">
-                <div class="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center text-white font-bold">F</div>
-                <h1 class="text-xl font-bold text-slate-800">FocusFlow</h1>
-            </div>
-            <nav class="flex gap-8">
-                <button onclick="switchTab('main')" id="btn-main" class="tab-active py-2 transition-all">الرئيسية</button>
-                <button onclick="switchTab('dashboard')" id="btn-dashboard" class="py-2 text-slate-500 hover:text-blue-600 transition-all">لوحة التحكم</button>
-            </nav>
-        </div>
-    </header>
-
-    <main class="max-w-5xl mx-auto px-6 py-8">
+        :root {
+            --cyan-accent: #00d2ff;
+            --purple-accent: #9d50bb;
+            --gold-accent: #d4af37;
+            --main-gradient: linear-gradient(180deg, #00d2ff 0%, #3a7bd5 50%, #9d50bb 100%);
+        }
         
-        <!-- Main Content -->
-        <div id="tab-main" class="grid grid-cols-1 lg:grid-cols-12 gap-8">
-            
-            <!-- Timer Section (4 Cols) -->
-            <div class="lg:col-span-5 space-y-6">
-                <div class="glass-card p-10 text-center border border-blue-50">
-                    <h2 class="text-slate-500 font-medium mb-4">عداد التركيز</h2>
-                    <div id="timer-display" class="text-7xl font-black text-slate-800 mb-8 tracking-tighter">25:00</div>
-                    
-                    <div class="flex justify-center gap-3 mb-8">
-                        <button onclick="toggleTimer()" id="timer-btn" class="bg-blue-600 text-white px-10 py-3 rounded-xl font-bold hover:bg-blue-700 shadow-lg shadow-blue-200 transition-all active:scale-95">ابدأ العمل</button>
-                        <button onclick="resetTimer()" class="bg-slate-100 text-slate-600 px-5 py-3 rounded-xl hover:bg-slate-200 transition-all">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
-                        </button>
-                    </div>
-
-                    <div class="inline-flex p-1 bg-slate-100 rounded-xl w-full">
-                        <button onclick="setMode(25)" class="flex-1 py-2 rounded-lg text-sm font-bold hover:bg-white hover:shadow-sm transition-all">تركيز</button>
-                        <button onclick="setMode(5)" class="flex-1 py-2 rounded-lg text-sm font-bold hover:bg-white hover:shadow-sm transition-all">راحة</button>
-                        <button onclick="setMode(15)" class="flex-1 py-2 rounded-lg text-sm font-bold hover:bg-white hover:shadow-sm transition-all">طويلة</button>
-                    </div>
-                </div>
-
-                <div class="glass-card p-6 bg-blue-600 text-white shadow-blue-200">
-                    <h3 class="font-bold mb-1 opacity-90 text-sm">إنجاز اليوم</h3>
-                    <div class="flex items-end justify-between">
-                        <span class="text-3xl font-bold" id="daily-percent">0%</span>
-                        <span class="text-xs opacity-80" id="daily-fraction">0 من 0 مهام</span>
-                    </div>
-                    <div class="w-full bg-blue-400/30 h-2 mt-3 rounded-full overflow-hidden">
-                        <div id="progress-bar-inner" class="bg-white h-full transition-all duration-500" style="width: 0%"></div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Tasks Section (7 Cols) -->
-            <div class="lg:col-span-7 space-y-6">
-                <div class="glass-card p-6">
-                    <h2 class="text-xl font-bold mb-6 flex items-center gap-2">
-                        قائمة المهام
-                        <span id="task-badge" class="bg-blue-100 text-blue-600 text-xs px-2 py-1 rounded-full">0</span>
-                    </h2>
-                    
-                    <form onsubmit="event.preventDefault(); addTask();" class="flex gap-2 mb-8">
-                        <input type="text" id="task-input" autocomplete="off" placeholder="أضف مهمة جديدة للتركيز عليها..." class="flex-1 border-2 border-slate-100 rounded-xl px-4 py-3 focus:outline-none focus:border-blue-500 transition-all">
-                        <button type="submit" class="bg-slate-800 text-white px-6 py-3 rounded-xl hover:bg-slate-900 shadow-md transition-all">إضافة</button>
-                    </form>
-                    
-                    <div id="task-list" class="space-y-3 min-h-[300px]">
-                        <!-- Tasks -->
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Dashboard Content -->
-        <div id="tab-dashboard" class="hidden space-y-8">
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                <!-- Analytics -->
-                <div class="lg:col-span-2 glass-card p-8">
-                    <div class="flex justify-between items-center mb-8">
-                        <h2 class="text-xl font-bold">تحليل الأداء الأسبوعي</h2>
-                        <span class="text-sm text-slate-400 italic">يتم التحديث تلقائياً</span>
-                    </div>
-                    <div style="height: 350px;">
-                        <canvas id="weeklyChart"></canvas>
-                    </div>
-                </div>
-
-                <!-- History -->
-                <div class="lg:col-span-1 glass-card p-6 flex flex-col">
-                    <div class="flex justify-between items-center mb-6">
-                        <h2 class="text-lg font-bold">المنجز سابقاً</h2>
-                        <button onclick="clearHistory()" class="text-red-400 text-xs hover:text-red-600">مسح الكل</button>
-                    </div>
-                    <div id="history-list" class="space-y-3 flex-1 overflow-y-auto max-h-[400px] pr-2">
-                        <!-- History items -->
-                    </div>
-                </div>
-            </div>
-        </div>
-
-    </main>
-
-    <script>
-        // Data Structures
-        let state = {
-            tasks: JSON.parse(localStorage.getItem('ff_tasks')) || [],
-            stats: JSON.parse(localStorage.getItem('ff_stats')) || {
-                "السبت": 0, "الأحد": 0, "الاثنين": 0, "الثلاثاء": 0, "الأربعاء": 0, "الخميس": 0, "الجمعة": 0
-            }
-        };
-
-        let timerSeconds = 25 * 60;
-        let timerInterval = null;
-
-        // Navigation
-        function switchTab(tab) {
-            document.getElementById('tab-main').style.display = tab === 'main' ? 'grid' : 'none';
-            document.getElementById('tab-dashboard').style.display = tab === 'dashboard' ? 'block' : 'none';
-            
-            document.getElementById('btn-main').className = tab === 'main' ? 'tab-active py-2 transition-all' : 'py-2 text-slate-500 transition-all';
-            document.getElementById('btn-dashboard').className = tab === 'dashboard' ? 'tab-active py-2 transition-all' : 'py-2 text-slate-500 transition-all';
-            
-            if (tab === 'dashboard') initChart();
+        body { 
+            font-family: 'Tajawal', sans-serif; 
+            background-color: #ffffff;
+            background-image: radial-gradient(#e2e8f0 0.5px, transparent 0.5px);
+            background-size: 24px 24px;
+            color: #1e293b;
         }
 
-        // Timer
+        .glass-panel { 
+            background: rgba(255, 255, 255, 0.7); 
+            backdrop-filter: blur(12px); 
+            border: 1px solid rgba(226, 232, 240, 0.8); 
+            border-radius: 1.5rem; 
+        }
+
+        .timer-container {
+            position: relative;
+            background: rgba(255, 255, 255, 0.4);
+            border: 2px solid transparent;
+            background-clip: padding-box;
+            border-radius: 2rem;
+            padding: 2rem;
+            box-shadow: 0 20px 50px rgba(58, 123, 213, 0.1);
+        }
+        
+        .timer-container::after {
+            content: '';
+            position: absolute;
+            top: -2px; bottom: -2px; left: -2px; right: -2px;
+            background: var(--main-gradient);
+            z-index: -1;
+            border-radius: 2rem;
+            opacity: 0.3;
+        }
+
+        .timer-display {
+            background: var(--main-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-weight: 900;
+        }
+
+        .btn-primary {
+            background: var(--main-gradient);
+            color: white;
+            transition: all 0.3s ease;
+        }
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(58, 123, 213, 0.3);
+        }
+
+        .sidebar-active {
+            background: var(--main-gradient);
+            color: white !important;
+        }
+
+        #canvas-3d { position: fixed; top: 0; left: 0; pointer-events: none; z-index: 0; }
+        
+        .task-card {
+            border-right: 4px solid transparent;
+            border-image: var(--main-gradient) 1;
+            background: white;
+        }
+
+        /* تنسيق صندوق الدردشة */
+        #ai-chat-drawer {
+            transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .ai-message {
+            background: #f8fafc;
+            border-radius: 1rem 1rem 0 1rem;
+            padding: 0.75rem;
+            margin-bottom: 0.5rem;
+            font-size: 0.85rem;
+        }
+        .user-message {
+            background: var(--main-gradient);
+            color: white;
+            border-radius: 1rem 1rem 1rem 0;
+            padding: 0.75rem;
+            margin-bottom: 0.5rem;
+            font-size: 0.85rem;
+            align-self: flex-end;
+        }
+    </style>
+</head>
+<body>
+
+    <canvas id="canvas-3d"></canvas>
+
+    <div class="flex h-screen overflow-hidden relative z-10">
+        <!-- Sidebar -->
+        <aside class="w-64 bg-white/60 backdrop-blur-xl border-l border-slate-100 flex flex-col p-6 hidden md:flex">
+            <div class="flex flex-col items-center mb-12">
+                <div class="w-16 h-16 rounded-2xl mb-4 flex items-center justify-center shadow-xl" style="background: var(--main-gradient);">
+                    <svg class="w-10 h-10 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M12 2c5.523 0 10 4.477 10 10s-4.477 10-10 10S2 17.523 2 12 6.477 2 12 2z"/>
+                        <path d="M12 6v6l4 2"/>
+                    </svg>
+                </div>
+                <h1 class="text-xl font-black tracking-tight">doncod<span class="text-indigo-600">.life</span></h1>
+            </div>
+            
+            <nav class="flex-1 space-y-2">
+                <a href="#" class="sidebar-active flex items-center gap-3 p-3.5 rounded-xl text-sm font-bold shadow-lg">
+                    <span>الرئيسية</span>
+                </a>
+                <button onclick="toggleAIChat()" class="w-full flex items-center gap-3 p-3.5 rounded-xl text-sm font-bold text-slate-500 hover:bg-indigo-50 hover:text-indigo-600 transition-all">
+                    <span>مساعد AI</span>
+                </button>
+                <a href="#" class="flex items-center gap-3 p-3.5 rounded-xl text-sm font-bold text-slate-500 hover:bg-slate-50 transition-all">
+                    <span>الإحصائيات</span>
+                </a>
+            </nav>
+
+            <div class="p-4 rounded-2xl bg-slate-50 border border-slate-100 mt-auto">
+                <p class="text-[10px] font-black text-gold-accent mb-1 uppercase">ذكاء اصطناعي نشط</p>
+                <p class="text-xs font-bold text-slate-600">Gemini 2.5 Flash</p>
+            </div>
+        </aside>
+
+        <!-- Content -->
+        <main class="flex-1 overflow-y-auto p-8 relative">
+            <header class="flex justify-between items-center mb-10">
+                <div>
+                    <h2 class="text-2xl font-black text-slate-800">مرحباً بك في doncod</h2>
+                    <p class="text-slate-400 text-sm font-medium" id="date-now"></p>
+                </div>
+                <button onclick="toggleAIChat()" class="flex items-center gap-3 bg-white p-2 px-4 rounded-2xl shadow-sm border border-indigo-100 hover:shadow-md transition-all">
+                    <span class="text-xs font-bold text-indigo-600">اسأل AI</span>
+                    <div class="w-8 h-8 rounded-lg bg-indigo-50 flex items-center justify-center font-black text-indigo-600 text-[10px]">✨</div>
+                </button>
+            </header>
+
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+                <!-- العداد -->
+                <div class="lg:col-span-5">
+                    <div class="timer-container text-center">
+                        <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">تركيز نشط</p>
+                        <div id="timer-display" class="timer-display text-8xl mb-8">25:00</div>
+                        
+                        <div class="flex justify-center gap-4 mb-8">
+                            <button onclick="toggleTimer()" id="timer-btn" class="btn-primary px-12 py-4 rounded-2xl font-black text-sm">ابدأ العمل</button>
+                            <button onclick="resetTimer()" class="p-4 bg-white border border-slate-100 rounded-2xl">
+                                <svg class="w-6 h-6 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                            </button>
+                        </div>
+                        <div class="flex gap-2 justify-center">
+                            <button onclick="setMode(25)" class="px-4 py-2 rounded-xl text-[10px] font-black bg-white border border-slate-100 shadow-sm text-indigo-600">تركيز</button>
+                            <button onclick="setMode(5)" class="px-4 py-2 rounded-xl text-[10px] font-black text-slate-400 hover:bg-white transition-all">راحة</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- المهام -->
+                <div class="lg:col-span-7 space-y-6">
+                    <div class="glass-panel p-6 shadow-sm border-r-4 border-r-indigo-500">
+                        <h3 class="font-black text-slate-800 mb-6">المهام اليومية</h3>
+                        <form onsubmit="event.preventDefault(); addTask();" class="flex gap-3 mb-6">
+                            <input type="text" id="task-input" placeholder="ماذا سننجز اليوم؟" class="flex-1 bg-slate-50 border-0 rounded-2xl px-5 py-3.5 text-sm outline-none focus:ring-2 focus:ring-indigo-400 transition-all">
+                            <button type="submit" class="btn-primary px-6 rounded-2xl font-bold">+</button>
+                        </form>
+                        <div id="task-list" class="space-y-3 max-h-[300px] overflow-y-auto"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- AI Chat Drawer -->
+            <div id="ai-chat-drawer" class="fixed top-0 left-0 w-80 h-full bg-white shadow-2xl z-50 transform -translate-x-full flex flex-col border-r border-slate-100">
+                <div class="p-6 border-b border-slate-50 flex justify-between items-center bg-indigo-50/30">
+                    <h3 class="font-black text-indigo-600 flex items-center gap-2">
+                        <span class="text-lg">✨</span> مساعد doncod
+                    </h3>
+                    <button onclick="toggleAIChat()" class="text-slate-400 hover:text-slate-600 text-xl font-bold">×</button>
+                </div>
+                
+                <div id="ai-chat-messages" class="flex-1 overflow-y-auto p-4 flex flex-col space-y-3">
+                    <div class="ai-message">أهلاً بك! أنا مساعد doncod الذكي. كيف يمكنني مساعدتك في زيادة إنتاجيتك اليوم؟</div>
+                </div>
+
+                <div class="p-4 bg-slate-50 border-t border-slate-100">
+                    <div class="flex gap-2">
+                        <input type="text" id="ai-input" placeholder="اسأل أي شيء..." class="flex-1 bg-white border border-slate-200 rounded-xl px-4 py-2 text-sm outline-none focus:border-indigo-400">
+                        <button onclick="askAI()" id="ai-send-btn" class="btn-primary p-2 px-4 rounded-xl font-bold text-xs">إرسال</button>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        const state = {
+            tasks: JSON.parse(localStorage.getItem('doncod_tasks')) || [],
+            sessions: parseInt(localStorage.getItem('doncod_sessions')) || 0,
+            timerSeconds: 25 * 60,
+            timerInterval: null,
+            apiKey: "" // API Key provided by environment
+        };
+
+        // --- AI Assistant Logic ---
+        function toggleAIChat() {
+            const drawer = document.getElementById('ai-chat-drawer');
+            drawer.classList.toggle('-translate-x-full');
+        }
+
+        async function askAI() {
+            const input = document.getElementById('ai-input');
+            const container = document.getElementById('ai-chat-messages');
+            const sendBtn = document.getElementById('ai-send-btn');
+            const query = input.value.trim();
+
+            if (!query) return;
+
+            // Add user message
+            const userMsg = document.createElement('div');
+            userMsg.className = 'user-message';
+            userMsg.innerText = query;
+            container.appendChild(userMsg);
+            input.value = '';
+            container.scrollTop = container.scrollHeight;
+
+            // Add thinking indicator
+            const thinkingMsg = document.createElement('div');
+            thinkingMsg.className = 'ai-message italic text-slate-400';
+            thinkingMsg.innerText = 'يفكر...';
+            container.appendChild(thinkingMsg);
+            
+            sendBtn.disabled = true;
+
+            try {
+                const response = await fetchAI(query);
+                thinkingMsg.classList.remove('italic', 'text-slate-400');
+                thinkingMsg.innerText = response;
+            } catch (error) {
+                thinkingMsg.innerText = "عذراً، حدث خطأ أثناء الاتصال بالذكاء الاصطناعي.";
+            } finally {
+                sendBtn.disabled = false;
+                container.scrollTop = container.scrollHeight;
+            }
+        }
+
+        async function fetchAI(prompt, retryCount = 0) {
+            const systemPrompt = "أنت مساعد ذكي لمنصة doncod.life للإنتاجية. قدم نصائح عملية وقصيرة. دائماً شجع المستخدم على إكمال مهامه الحالية والتركيز.";
+            
+            try {
+                const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${state.apiKey}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        contents: [{ parts: [{ text: prompt }] }],
+                        systemInstruction: { parts: [{ text: systemPrompt }] }
+                    })
+                });
+
+                if (!res.ok) throw new Error('API Error');
+                const data = await res.json();
+                return data.candidates?.[0]?.content?.parts?.[0]?.text || "لم أستطع معالجة الطلب.";
+            } catch (error) {
+                if (retryCount < 5) {
+                    const delay = Math.pow(2, retryCount) * 1000;
+                    await new Promise(r => setTimeout(r, delay));
+                    return fetchAI(prompt, retryCount + 1);
+                }
+                throw error;
+            }
+        }
+
+        // --- Existing App Logic ---
+        let scene, camera, renderer, object;
+        function init3D() {
+            scene = new THREE.Scene();
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            renderer = new THREE.WebGLRenderer({ canvas: document.getElementById('canvas-3d'), alpha: true, antialias: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+
+            const geometry = new THREE.IcosahedronGeometry(3.5, 1);
+            const material = new THREE.MeshPhongMaterial({ color: 0x3a7bd5, wireframe: true, transparent: true, opacity: 0.1 });
+            object = new THREE.Mesh(geometry, material);
+            scene.add(object);
+
+            const light = new THREE.PointLight(0xffffff, 1);
+            light.position.set(10, 10, 10);
+            scene.add(light);
+            scene.add(new THREE.AmbientLight(0xffffff, 0.5));
+
+            camera.position.z = 8;
+            camera.position.x = -4;
+
+            function animate() {
+                requestAnimationFrame(animate);
+                object.rotation.y += 0.002;
+                if (state.timerInterval) object.rotation.y += 0.01;
+                renderer.render(scene, camera);
+            }
+            animate();
+        }
+
         function updateDisplay() {
-            const m = Math.floor(timerSeconds / 60);
-            const s = timerSeconds % 60;
-            const text = `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
-            document.getElementById('timer-display').innerText = text;
-            document.title = timerInterval ? `(${text}) FocusFlow` : 'FocusFlow';
+            const m = Math.floor(state.timerSeconds / 60);
+            const s = state.timerSeconds % 60;
+            document.getElementById('timer-display').innerText = `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
         }
 
         function toggleTimer() {
             const btn = document.getElementById('timer-btn');
-            const display = document.getElementById('timer-display');
-            
-            if (timerInterval) {
-                clearInterval(timerInterval);
-                timerInterval = null;
+            if (state.timerInterval) {
+                clearInterval(state.timerInterval);
+                state.timerInterval = null;
                 btn.innerText = 'استئناف';
-                btn.className = "bg-blue-600 text-white px-10 py-3 rounded-xl font-bold shadow-lg shadow-blue-200 transition-all";
-                display.classList.remove('timer-running');
             } else {
-                btn.innerText = 'إيقاف مؤقت';
-                btn.className = "bg-orange-500 text-white px-10 py-3 rounded-xl font-bold shadow-lg shadow-orange-200 transition-all";
-                display.classList.add('timer-running');
-                timerInterval = setInterval(() => {
-                    if (timerSeconds > 0) {
-                        timerSeconds--;
+                btn.innerText = 'إيقاف';
+                state.timerInterval = setInterval(() => {
+                    if (state.timerSeconds > 0) {
+                        state.timerSeconds--;
                         updateDisplay();
                     } else {
-                        finishTimer();
+                        finishSession();
                     }
                 }, 1000);
             }
         }
 
-        function finishTimer() {
-            clearInterval(timerInterval);
-            timerInterval = null;
-            playSound();
-            alert("عمل رائع! انتهت جلسة التركيز.");
+        function finishSession() {
+            clearInterval(state.timerInterval);
+            state.timerInterval = null;
+            state.sessions++;
+            save();
+            render();
             resetTimer();
         }
 
-        function playSound() {
-            const msg = new SpeechSynthesisUtterance("انتهى الوقت، خذ قسطاً من الراحة");
-            msg.lang = 'ar-SA';
-            window.speechSynthesis.speak(msg);
-        }
-
         function resetTimer() {
-            clearInterval(timerInterval);
-            timerInterval = null;
-            timerSeconds = 25 * 60;
+            clearInterval(state.timerInterval);
+            state.timerInterval = null;
+            state.timerSeconds = 25 * 60;
             updateDisplay();
             document.getElementById('timer-btn').innerText = 'ابدأ العمل';
-            document.getElementById('timer-btn').className = "bg-blue-600 text-white px-10 py-3 rounded-xl font-bold shadow-lg shadow-blue-200 transition-all";
-            document.getElementById('timer-display').classList.remove('timer-running');
         }
 
         function setMode(mins) {
             resetTimer();
-            timerSeconds = mins * 60;
+            state.timerSeconds = mins * 60;
             updateDisplay();
         }
 
-        // Tasks Logic
         function addTask() {
             const input = document.getElementById('task-input');
-            const text = input.value.trim();
-            if (!text) return;
-
-            state.tasks.push({
-                id: Date.now(),
-                text: text,
-                done: false,
-                day: getCurrentDay()
-            });
-
+            if (!input.value.trim()) return;
+            state.tasks.push({ id: Date.now(), text: input.value, done: false });
             input.value = '';
             save();
             render();
@@ -225,127 +373,45 @@
 
         function toggleTask(id) {
             state.tasks = state.tasks.map(t => t.id === id ? {...t, done: !t.done} : t);
-            updateStats();
             save();
             render();
-        }
-
-        function removeTask(id) {
-            state.tasks = state.tasks.filter(t => t.id !== id);
-            updateStats();
-            save();
-            render();
-        }
-
-        function updateStats() {
-            const today = getCurrentDay();
-            const todayTasks = state.tasks.filter(t => t.day === today);
-            if (todayTasks.length === 0) {
-                state.stats[today] = 0;
-            } else {
-                const completed = todayTasks.filter(t => t.done).length;
-                state.stats[today] = Math.round((completed / todayTasks.length) * 100);
-            }
-        }
-
-        function getCurrentDay() {
-            const days = ["الأحد", "الاثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت"];
-            return days[new Date().getDay()];
         }
 
         function save() {
-            localStorage.setItem('ff_tasks', JSON.stringify(state.tasks));
-            localStorage.setItem('ff_stats', JSON.stringify(state.stats));
+            localStorage.setItem('doncod_tasks', JSON.stringify(state.tasks));
+            localStorage.setItem('doncod_sessions', state.sessions);
         }
 
         function render() {
-            // Task List
             const list = document.getElementById('task-list');
-            const activeTasks = state.tasks.filter(t => !t.done);
-            document.getElementById('task-badge').innerText = activeTasks.length;
-
-            if (activeTasks.length === 0) {
-                list.innerHTML = `<div class="text-center py-10 text-slate-400">لا توجد مهام نشطة حالياً. ابدأ بإضافة شيء جديد!</div>`;
-            } else {
-                list.innerHTML = activeTasks.map(t => `
-                    <div class="flex items-center justify-between p-4 bg-slate-50 border border-slate-100 rounded-xl group transition-all hover:border-blue-200">
-                        <div class="flex items-center gap-4">
-                            <input type="checkbox" onchange="toggleTask(${t.id})" class="w-5 h-5 cursor-pointer accent-blue-600">
-                            <span class="font-medium text-slate-700">${t.text}</span>
+            list.innerHTML = state.tasks.map(t => `
+                <div class="task-card flex items-center justify-between p-4 rounded-xl shadow-sm border border-slate-50">
+                    <div class="flex items-center gap-4">
+                        <div onclick="toggleTask(${t.id})" class="w-6 h-6 rounded-lg border-2 border-indigo-200 flex items-center justify-center cursor-pointer ${t.done ? 'bg-indigo-500 border-indigo-500' : ''}">
+                            ${t.done ? '<svg class="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20"><path d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"></path></svg>' : ''}
                         </div>
-                        <button onclick="removeTask(${t.id})" class="text-slate-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" /></svg>
-                        </button>
+                        <span class="text-sm font-bold ${t.done ? 'line-through text-slate-300' : 'text-slate-700'}">${t.text}</span>
                     </div>
-                `).join('');
-            }
-
-            // History
-            const historyList = document.getElementById('history-list');
-            const doneTasks = state.tasks.filter(t => t.done);
-            historyList.innerHTML = doneTasks.length ? doneTasks.reverse().map(t => `
-                <div class="p-3 bg-white border border-slate-100 rounded-lg flex justify-between items-center shadow-sm">
-                    <span class="line-through text-slate-400 text-sm">${t.text}</span>
-                    <button onclick="removeTask(${t.id})" class="text-xs text-red-300 hover:text-red-500">حذف</button>
                 </div>
-            `).join('') : '<p class="text-center text-slate-300 text-sm mt-10">سجل الإنجاز فارغ</p>';
-
-            // Progress Bar
-            const todayTasks = state.tasks.filter(t => t.day === getCurrentDay());
-            const completedCount = todayTasks.filter(t => t.done).length;
-            const percent = todayTasks.length ? Math.round((completedCount / todayTasks.length) * 100) : 0;
-            
-            document.getElementById('daily-percent').innerText = percent + '%';
-            document.getElementById('daily-fraction').innerText = `${completedCount} من ${todayTasks.length} مهام`;
-            document.getElementById('progress-bar-inner').style.width = percent + '%';
+            `).join('');
         }
 
-        function clearHistory() {
-            if (confirm("هل تريد مسح جميع المهام المكتملة من السجل؟")) {
-                state.tasks = state.tasks.filter(t => !t.done);
-                updateStats();
-                save();
-                render();
-            }
-        }
-
-        // Chart
-        let chartInstance = null;
-        function initChart() {
-            const ctx = document.getElementById('weeklyChart').getContext('2d');
-            if (chartInstance) chartInstance.destroy();
-
-            const labels = ["السبت", "الأحد", "الاثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة"];
-            const data = labels.map(day => state.stats[day] || 0);
-
-            chartInstance = new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        label: 'نسبة الإنجاز %',
-                        data: data,
-                        backgroundColor: '#3b82f6',
-                        borderRadius: 8,
-                        hoverBackgroundColor: '#2563eb'
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: { legend: { display: false } },
-                    scales: {
-                        y: { beginAtZero: true, max: 100, grid: { display: false } },
-                        x: { grid: { display: false } }
-                    }
-                }
-            });
-        }
-
-        // Init
         window.onload = () => {
+            document.getElementById('date-now').innerText = new Intl.DateTimeFormat('ar-EG', { dateStyle: 'full' }).format(new Date());
+            init3D();
             render();
             updateDisplay();
+            
+            // AI Chat Input listener
+            document.getElementById('ai-input').addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') askAI();
+            });
+            
+            window.addEventListener('resize', () => {
+                camera.aspect = window.innerWidth / window.innerHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(window.innerWidth, window.innerHeight);
+            });
         };
     </script>
 </body>
