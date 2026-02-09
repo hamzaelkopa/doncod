@@ -1,7 +1,15 @@
 /* ========= SAFE STORAGE ========= */
 
-function safe(k,f){try{return JSON.parse(localStorage.getItem(k))||f}catch{return f}}
-function save(k,v){localStorage.setItem(k,JSON.stringify(v))}
+function safe(k,f){
+ try { return JSON.parse(localStorage.getItem(k)) ?? f }
+ catch { return f }
+}
+
+function save(k,v){
+ localStorage.setItem(k,JSON.stringify(v))
+}
+
+/* ========= DB ========= */
 
 const DB={
  habits:safe("v2_habits",[]),
@@ -17,103 +25,160 @@ function persist(){
  save("v2_streak",DB.streak)
 }
 
+/* ========= ELEMENTS SAFE ========= */
+
+const habitForm = document.getElementById("habitForm")
+const nameInput = document.getElementById("name")
+const typeSelect = document.getElementById("type")
+const habitList = document.getElementById("habitList")
+const xpEl = document.getElementById("xp")
+const streakEl = document.getElementById("streak")
+const todayEl = document.getElementById("today")
+const notifyBtn = document.getElementById("notifyBtn")
+const chartCanvas = document.getElementById("chart")
+
 /* ========= SECURITY ========= */
 
 function clean(t){
+ if(!t) return ""
  return t.replace(/[<>]/g,"").trim()
 }
 
 /* ========= ADD ========= */
 
-habitForm.onsubmit=e=>{
+habitForm?.addEventListener("submit", e=>{
  e.preventDefault()
- const v=clean(name.value)
- if(v.length<2) return
- DB.habits.push({id:Date.now(),name:v,type:type.value})
- name.value=""
+
+ const v = clean(nameInput.value)
+
+ if(v.length < 2 || v.length > 60) return
+
+ DB.habits.push({
+   id: Date.now(),
+   name: v,
+   type: typeSelect.value
+ })
+
+ nameInput.value = ""
+
  persist()
  render()
-}
+})
 
 /* ========= COMPLETE ========= */
 
 function done(id){
- const today=new Date().toDateString()
+ const today = new Date().toDateString()
+
  if(DB.logs.find(x=>x.id===id && x.day===today)) return
 
- DB.logs.push({id,day:today,time:Date.now()})
- DB.xp+=10
+ DB.logs.push({
+   id,
+   day: today,
+   time: Date.now()
+ })
+
+ DB.xp += 10
  updateStreak()
  persist()
  render()
 }
 
-/* ========= STREAK SMART ========= */
+/* ========= STREAK ========= */
 
 function updateStreak(){
  const days=[...new Set(DB.logs.map(x=>x.day))]
- if(days.length<2){DB.streak=1;return}
+
+ if(days.length < 2){
+   DB.streak = days.length
+   return
+ }
 
  const a=new Date(days.at(-1))
  const b=new Date(days.at(-2))
- DB.streak = (a-b===86400000)? DB.streak+1 : 1
+
+ DB.streak = (a-b === 86400000) ? DB.streak + 1 : 1
 }
 
 /* ========= RENDER SAFE ========= */
 
 function render(){
+
+ if(!habitList) return
+
  habitList.innerHTML=""
 
  DB.habits.forEach(h=>{
+
    const row=document.createElement("div")
    row.className="flex justify-between mb-2"
 
    const s=document.createElement("span")
-   s.textContent=`${h.name} (${h.type})`
+   s.textContent = `${h.name} (${h.type})`
 
    const b=document.createElement("button")
    b.className="btn text-sm"
    b.textContent="تم"
-   b.onclick=()=>done(h.id)
+   b.onclick = ()=>done(h.id)
 
    row.appendChild(s)
    row.appendChild(b)
    habitList.appendChild(row)
+
  })
 
- xp.textContent=DB.xp
- streak.textContent=DB.streak
- today.textContent=DB.logs.filter(
-   x=>x.day===new Date().toDateString()).length
+ if(xpEl) xpEl.textContent = DB.xp
+ if(streakEl) streakEl.textContent = DB.streak
+
+ if(todayEl){
+   todayEl.textContent =
+     DB.logs.filter(x=>x.day===new Date().toDateString()).length
+ }
 
  drawChart()
 }
 
-/* ========= CHART ========= */
+/* ========= CHART SAFE ========= */
 
 let chart
-function drawChart(){
- const map={}
- DB.logs.forEach(l=>map[l.day]=(map[l.day]||0)+1)
 
- const labels=Object.keys(map).slice(-7)
- const data=labels.map(k=>map[k])
+function drawChart(){
+
+ if(!chartCanvas || typeof Chart === "undefined") return
+
+ const map={}
+ DB.logs.forEach(l=> map[l.day]=(map[l.day]||0)+1 )
+
+ const labels = Object.keys(map).slice(-7)
+ const data = labels.map(k=>map[k])
 
  if(chart) chart.destroy()
- chart=new Chart(chartCanvas,{
+
+ chart = new Chart(chartCanvas,{
    type:"bar",
-   data:{labels,datasets:[{data}]},
-   options:{plugins:{legend:{display:false}}}
+   data:{
+     labels,
+     datasets:[{ data }]
+   },
+   options:{
+     plugins:{ legend:{ display:false } }
+   }
  })
 }
 
 /* ========= NOTIFICATIONS ========= */
 
-notifyBtn.onclick=async()=>{
+notifyBtn?.addEventListener("click", async ()=>{
+
  if(!("Notification" in window)) return
+
  await Notification.requestPermission()
- new Notification("DONCOD LIFE","ابدأ عاداتك اليوم 🔥")
-}
+
+ if(Notification.permission === "granted"){
+   new Notification("DONCOD LIFE","ابدأ عاداتك اليوم 🔥")
+ }
+
+})
 
 /* ========= PWA ========= */
 
@@ -123,5 +188,4 @@ if("serviceWorker" in navigator){
 
 /* ========= INIT ========= */
 
-const chartCanvas=document.getElementById("chart")
 render()
