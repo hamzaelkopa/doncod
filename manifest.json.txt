@@ -1,8 +1,0 @@
-{
-nameDONCOD LIFE,
-short_nameDONCOD,
-start_urlindex.html,
-displaystandalone,
-background_color#0b1220,
-theme_color#6366f1
-}
