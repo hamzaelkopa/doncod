@@ -17,6 +17,34 @@ body{background:#0b1220;color:#e5e7eb;font-family:sans-serif}
 input,select{background:#0f172a;border:1px solid #1f2937;padding:10px;border-radius:10px;width:100%}
 </style>
 </head>
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getAuth, GoogleAuthProvider, signInWithPopup, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { getFirestore, doc, setDoc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyBeS71iyFfTh4bM5fRadfzd5vALwiqXlEs",
+  authDomain: "doncod-life.firebaseapp.com",
+  projectId: "doncod-life",
+  storageBucket: "doncod-life.firebasestorage.app",
+  messagingSenderId: "1014581889148",
+  appId: "1:1014581889148:web:144b1024fd168b1ea621f9"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+
+window.auth = auth;
+window.db = db;
+window.GoogleAuthProvider = GoogleAuthProvider;
+window.signInWithPopup = signInWithPopup;
+window.signOut = signOut;
+window.doc = doc;
+window.setDoc = setDoc;
+window.getDoc = getDoc;
+window.updateDoc = updateDoc;
+</script>
 
 <body class="p-4 max-w-4xl mx-auto space-y-4">
 
