@@ -45,6 +45,15 @@ window.setDoc = setDoc;
 window.getDoc = getDoc;
 window.updateDoc = updateDoc;
 </script>
+<button onclick="loginGoogle()">Login with Google</button>
+<script>
+async function loginGoogle(){
+  const provider = new GoogleAuthProvider();
+  const res = await signInWithPopup(auth, provider);
+  const user = res.user;
+  alert("Welcome " + user.displayName);
+}
+</script>
 
 <body class="p-4 max-w-4xl mx-auto space-y-4">
 
