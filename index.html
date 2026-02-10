@@ -3,9 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>DONCOD LIFE V2</title>
+<title>DONCOD LIFE</title>
 
 <link rel="manifest" href="manifest.json">
+
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
@@ -13,18 +14,18 @@
 body{background:#0b1220;color:#e5e7eb;font-family:sans-serif}
 .card{background:#111827;border:1px solid #1f2937;border-radius:16px;padding:16px}
 .btn{background:#6366f1;padding:10px 14px;border-radius:10px}
-input,select{background:#0f172a;border:1px solid #1f2937;padding:10px;border-radius:10px}
+input,select{background:#0f172a;border:1px solid #1f2937;padding:10px;border-radius:10px;width:100%}
 </style>
 </head>
 
 <body class="p-4 max-w-4xl mx-auto space-y-4">
 
-<h1 class="text-xl font-bold">DONCOD LIFE V2 📱</h1>
+<h1 class="text-xl font-bold">DONCOD LIFE 🚀</h1>
 
 <div class="card">
 <form id="habitForm" class="flex gap-2">
-<input id="name" maxlength="60" placeholder="عادة جديدة">
-<select id="type">
+<input id="habitInput" maxlength="60" placeholder="عادة جديدة">
+<select id="habitType">
 <option value="daily">يومي</option>
 <option value="weekly">أسبوعي</option>
 <option value="monthly">شهري</option>
@@ -33,19 +34,24 @@ input,select{background:#0f172a;border:1px solid #1f2937;padding:10px;border-rad
 </form>
 </div>
 
-<div class="card" id="habitList"></div>
+<div id="habitList" class="card"></div>
 
 <div class="grid grid-cols-3 gap-3">
-<div class="card text-center">🔥 Streak<br><span id="streak"></span></div>
-<div class="card text-center">⭐ XP<br><span id="xp"></span></div>
-<div class="card text-center">✅ اليوم<br><span id="today"></span></div>
+<div class="card text-center">🔥<br><span id="streak">0</span></div>
+<div class="card text-center">⭐<br><span id="xp">0</span></div>
+<div class="card text-center">🏆<br><span id="level">1</span></div>
 </div>
 
 <div class="card">
 <canvas id="chart"></canvas>
 </div>
 
-<button id="notifyBtn" class="btn w-full">تفعيل إشعارات</button>
+<div class="grid grid-cols-2 gap-2">
+<button id="notifyBtn" class="btn">إشعارات</button>
+<button id="backupBtn" class="btn bg-gray-700">Backup</button>
+</div>
+
+<input type="file" id="restoreInput" hidden>
 
 <script src="app.js"></script>
 </body>
