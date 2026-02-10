@@ -1,10 +1,11 @@
-/* ========= SAFE STORAGE ========= */
+"use strict";
+
+/* ========= STORAGE ========= */
 
 function safe(k,f){
- try { return JSON.parse(localStorage.getItem(k)) ?? f }
- catch { return f }
+ try{return JSON.parse(localStorage.getItem(k)) ?? f}
+ catch{return f}
 }
-
 function save(k,v){
  localStorage.setItem(k,JSON.stringify(v))
 }
@@ -12,73 +13,69 @@ function save(k,v){
 /* ========= DB ========= */
 
 const DB={
- habits:safe("v2_habits",[]),
- logs:safe("v2_logs",[]),
- xp:safe("v2_xp",0),
- streak:safe("v2_streak",0)
+ habits:safe("p_habits",[]),
+ logs:safe("p_logs",[]),
+ xp:safe("p_xp",0),
+ streak:safe("p_streak",0)
 }
 
 function persist(){
- save("v2_habits",DB.habits)
- save("v2_logs",DB.logs)
- save("v2_xp",DB.xp)
- save("v2_streak",DB.streak)
+ save("p_habits",DB.habits)
+ save("p_logs",DB.logs)
+ save("p_xp",DB.xp)
+ save("p_streak",DB.streak)
 }
 
-/* ========= ELEMENTS SAFE ========= */
+/* ========= ELEMENTS ========= */
 
-const habitForm = document.getElementById("habitForm")
-const nameInput = document.getElementById("name")
-const typeSelect = document.getElementById("type")
-const habitList = document.getElementById("habitList")
-const xpEl = document.getElementById("xp")
-const streakEl = document.getElementById("streak")
-const todayEl = document.getElementById("today")
-const notifyBtn = document.getElementById("notifyBtn")
-const chartCanvas = document.getElementById("chart")
+const el={
+ form:document.getElementById("habitForm"),
+ input:document.getElementById("habitInput"),
+ type:document.getElementById("habitType"),
+ list:document.getElementById("habitList"),
+ xp:document.getElementById("xp"),
+ streak:document.getElementById("streak"),
+ level:document.getElementById("level"),
+ chart:document.getElementById("chart"),
+ notify:document.getElementById("notifyBtn"),
+ backup:document.getElementById("backupBtn"),
+ restore:document.getElementById("restoreInput")
+}
 
 /* ========= SECURITY ========= */
 
 function clean(t){
- if(!t) return ""
- return t.replace(/[<>]/g,"").trim()
+ return (t||"").replace(/[<>]/g,"").trim()
 }
 
 /* ========= ADD ========= */
 
-habitForm?.addEventListener("submit", e=>{
+el.form.addEventListener("submit",e=>{
  e.preventDefault()
 
- const v = clean(nameInput.value)
-
- if(v.length < 2 || v.length > 60) return
+ const v=clean(el.input.value)
+ if(v.length<2 || v.length>60) return
 
  DB.habits.push({
-   id: Date.now(),
-   name: v,
-   type: typeSelect.value
+  id:crypto.randomUUID(),
+  name:v,
+  type:el.type.value
  })
 
- nameInput.value = ""
-
+ el.input.value=""
  persist()
  render()
 })
 
 /* ========= COMPLETE ========= */
 
-function done(id){
- const today = new Date().toDateString()
+function complete(id){
+ const d=new Date().toDateString()
 
- if(DB.logs.find(x=>x.id===id && x.day===today)) return
+ if(DB.logs.find(x=>x.id===id && x.d===d)) return
 
- DB.logs.push({
-   id,
-   day: today,
-   time: Date.now()
- })
-
- DB.xp += 10
+ DB.logs.push({id,d})
+ DB.xp+=10
  updateStreak()
  persist()
  render()
@@ -87,98 +84,96 @@ function done(id){
 /* ========= STREAK ========= */
 
 function updateStreak(){
- const days=[...new Set(DB.logs.map(x=>x.day))]
-
- if(days.length < 2){
-   DB.streak = days.length
-   return
- }
+ const days=[...new Set(DB.logs.map(x=>x.d))]
+ if(days.length<2){DB.streak=days.length;return}
 
  const a=new Date(days.at(-1))
  const b=new Date(days.at(-2))
-
- DB.streak = (a-b === 86400000) ? DB.streak + 1 : 1
+ DB.streak=(a-b===86400000)?DB.streak+1:1
 }
 
-/* ========= RENDER SAFE ========= */
+/* ========= RENDER ========= */
 
 function render(){
 
- if(!habitList) return
-
- habitList.innerHTML=""
+ el.list.innerHTML=""
 
  DB.habits.forEach(h=>{
+  const row=document.createElement("div")
+  row.className="flex justify-between mb-2"
 
-   const row=document.createElement("div")
-   row.className="flex justify-between mb-2"
+  const s=document.createElement("span")
+  s.textContent=h.name+" ("+h.type+")"
 
-   const s=document.createElement("span")
-   s.textContent = `${h.name} (${h.type})`
+  const b=document.createElement("button")
+  b.className="btn text-sm"
+  b.textContent="تم"
+  b.onclick=()=>complete(h.id)
 
-   const b=document.createElement("button")
-   b.className="btn text-sm"
-   b.textContent="تم"
-   b.onclick = ()=>done(h.id)
-
-   row.appendChild(s)
-   row.appendChild(b)
-   habitList.appendChild(row)
-
+  row.appendChild(s)
+  row.appendChild(b)
+  el.list.appendChild(row)
  })
 
- if(xpEl) xpEl.textContent = DB.xp
- if(streakEl) streakEl.textContent = DB.streak
-
- if(todayEl){
-   todayEl.textContent =
-     DB.logs.filter(x=>x.day===new Date().toDateString()).length
- }
+ el.xp.textContent=DB.xp
+ el.streak.textContent=DB.streak
+ el.level.textContent=Math.floor(DB.xp/100)+1
 
  drawChart()
 }
 
-/* ========= CHART SAFE ========= */
+/* ========= CHART ========= */
 
 let chart
 
 function drawChart(){
-
- if(!chartCanvas || typeof Chart === "undefined") return
+ if(typeof Chart==="undefined") return
 
  const map={}
- DB.logs.forEach(l=> map[l.day]=(map[l.day]||0)+1 )
+ DB.logs.forEach(l=>map[l.d]=(map[l.d]||0)+1)
 
- const labels = Object.keys(map).slice(-7)
- const data = labels.map(k=>map[k])
+ const L=Object.keys(map).slice(-7)
+ const D=L.map(k=>map[k])
 
  if(chart) chart.destroy()
 
- chart = new Chart(chartCanvas,{
-   type:"bar",
-   data:{
-     labels,
-     datasets:[{ data }]
-   },
-   options:{
-     plugins:{ legend:{ display:false } }
-   }
+ chart=new Chart(el.chart,{
+  type:"bar",
+  data:{labels:L,datasets:[{data:D}]},
+  options:{plugins:{legend:{display:false}}}
  })
 }
 
-/* ========= NOTIFICATIONS ========= */
+/* ========= BACKUP ========= */
 
-notifyBtn?.addEventListener("click", async ()=>{
+el.backup.onclick=()=>{
+ const blob=new Blob([btoa(JSON.stringify(DB))])
+ const a=document.createElement("a")
+ a.href=URL.createObjectURL(blob)
+ a.download="doncod.backup"
+ a.click()
+}
 
- if(!("Notification" in window)) return
-
- await Notification.requestPermission()
-
- if(Notification.permission === "granted"){
-   new Notification("DONCOD LIFE","ابدأ عاداتك اليوم 🔥")
+el.restore.onchange=e=>{
+ const r=new FileReader()
+ r.onload=()=>{
+  try{
+   Object.assign(DB,JSON.parse(atob(r.result)))
+   persist()
+   render()
+  }catch{}
  }
+ r.readAsText(e.target.files[0])
+}
 
-})
+/* ========= NOTIFY ========= */
+
+el.notify.onclick=async()=>{
+ if(!("Notification" in window)) return
+ await Notification.requestPermission()
+ if(Notification.permission==="granted")
+  new Notification("DONCOD LIFE","ابدأ عاداتك اليوم 🔥")
+}
 
 /* ========= PWA ========= */
 
