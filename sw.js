@@ -1,6 +1,8 @@
+const CACHE="doncod-v3";
+
 self.addEventListener("install",e=>{
  e.waitUntil(
-  caches.open("v2").then(c=>c.addAll([
+  caches.open(CACHE).then(c=>c.addAll([
    "/",
    "/index.html",
    "/app.js"
