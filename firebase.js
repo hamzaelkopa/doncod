@@ -1,7 +1,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 
 export const firebaseConfig = {
-  apiKey: "PUT_YOUR_KEY",
+  apiKey: "AIzaSyBeS71iyFfTh4bM5fRadfzd5vALwiqXlEs",
   authDomain: "doncod-life.firebaseapp.com",
   projectId: "doncod-life",
   storageBucket: "doncod-life.appspot.com",
